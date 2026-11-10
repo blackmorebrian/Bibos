@@ -65,7 +65,11 @@ $('logout').addEventListener('click', () => {
   showLogin('Locked.');
 });
 
+/** The command list lives on whichever screen is showing: under the sign-in form, or at the top of the desk. */
+const cmdsEl = document.querySelector<HTMLElement>('.cmds')!;
+
 function showLogin(msg = ''): void {
+  loginEl.appendChild(cmdsEl);
   deskEl.hidden = true;
   loginEl.hidden = false;
   passIn.value = '';
@@ -92,6 +96,7 @@ function connect(): void {
       }
       retry = 1000;
       if (rememberIn.checked) try { localStorage.setItem(STORE, JSON.stringify(creds)); } catch { /* ignore */ }
+      deskEl.querySelector('header')!.after(cmdsEl);
       loginEl.hidden = true;
       deskEl.hidden = false;
       clearInterval(ping);

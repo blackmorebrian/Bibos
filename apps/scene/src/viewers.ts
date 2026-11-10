@@ -225,15 +225,21 @@ export function applyCommand(what: string, arg: string, lag = 0): void {
       else if (SCREEN_MODES.includes(mode)) S.screens = { mode, text: S.screens.text };
       break;
     }
-    case 'look': // a motion, a chase, or auto (both back to auto)
+    // Picking just a movement gives it with all lights on; picking just a chase runs it on a steady fan.
+    // Pick both and they run together.
+    case 'look': // a movement, a chase, or auto (both back to auto)
       if (arg === 'auto') { S.look = 'auto'; S.chase = 'auto'; }
-      else if (MOTIONS.includes(arg)) S.look = arg;
-      else if (CHASES.includes(arg)) S.chase = arg;
+      else if (MOTIONS.includes(arg)) { S.look = arg; if (S.chase === 'auto') S.chase = 'none'; }
+      else if (CHASES.includes(arg)) { S.chase = arg; if (S.look === 'auto') S.look = 'fan'; }
       break;
-    case 'motion': case 'move': if (arg === 'auto' || MOTIONS.includes(arg)) S.look = arg; break;
+    case 'motion': case 'move':
+      if (arg === 'auto') S.look = 'auto';
+      else if (MOTIONS.includes(arg)) { S.look = arg; if (S.chase === 'auto') S.chase = 'none'; }
+      break;
     case 'chase':
       if (['none', 'off', 'all'].includes(arg)) S.chase = 'none';
-      else if (arg === 'auto' || CHASES.includes(arg)) S.chase = arg;
+      else if (arg === 'auto') S.chase = 'auto';
+      else if (CHASES.includes(arg)) { S.chase = arg; if (S.look === 'auto') S.look = 'fan'; }
       break;
     case 'kick': if (arg) removeViewer(arg.replace(/^@/, '')); break;
     case 'jetpack': case 'jet': { // launch someone (or everyone in the crowd who's a viewer)

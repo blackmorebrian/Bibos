@@ -21,6 +21,65 @@
       <button type="submit" class="big go">Unlock</button>
       <p id="loginMsg" class="msg" role="status"></p>
     </form>
+    <section class="panel cmds">
+      <details>
+        <summary><h2>Command list</h2><span>tap to open</span></summary>
+
+        <h3>Viewers type these in chat</h3>
+        <dl>
+          <dt>!bibo</dt><dd>Join the crowd. Add words to style it in one go: <code>!bibo frog crown pink</code></dd>
+          <dt>!head <i>name</i></dt><dd>cat, dog, frog, moth, cactus, ghost, toaster, gremlin</dd>
+          <dt>!hat <i>name</i></dt><dd>flowers, bow, party, bucket, crown, phones, mohawk, swoop, horns, none</dd>
+          <dt>!color <i>name</i></dt><dd>Body color: green, orange, pink, blue, purple, yellow, red, teal</dd>
+          <dt>!shirt <i>name</i></dt><dd>pink, blue, yellow, white, teal, purple</dd>
+          <dt>!extra <i>name</i></dt><dd>hearts, kandi, shades, paint, spikes, none</dd>
+          <dt>!pattern <i>name</i></dt><dd>plain, stripe, bolt</dd>
+          <dt>!random</dt><dd>Random new look</dd>
+          <dt>!clap !dance !jump !lighter !phone !flag</dt><dd>Moves</dd>
+          <dt>!jetpack</dt><dd><b>Subs only.</b> Fly over the crowd. New and gifted subs get one automatically.</dd>
+          <dt>!bibohelp</dt><dd>Shows the commands card on stream (once every 90 s; mods any time)</dd>
+        </dl>
+
+        <h3>You &amp; mods: <code>!dj</code> commands</h3>
+        <p class="hint">Type in chat or put on a Stream Deck "chat message" button. Everything on this desk does the same thing.</p>
+        <dl>
+          <dt>!dj drop</dt><dd>The big drop moment</dd>
+          <dt>!dj hype</dt><dd>Hype finale: meter to full</dd>
+          <dt>!dj lights down / up</dt><dd>Lights down (lighters &amp; phones) or back up</dd>
+          <dt>!dj colors ff3d81 19d3c5</dt><dd>Light colors as two hex color codes, or <code>auto</code> to follow the show</dd>
+          <dt>!dj look fan</dt><dd>auto, fan, cross, chase, wave, pulse</dd>
+          <dt>!dj intensity 1.5</dt><dd>Brightness, 0 to 2</dd>
+          <dt>!dj glow 1</dt><dd>Light glow, 0 to 2</dd>
+          <dt>!dj speed 2</dt><dd>Light movement speed, 0.1 to 4</dd>
+          <dt>!dj lasers on</dt><dd>on, off or auto</dd>
+          <dt>!dj strobe on / off</dt><dd>Beam strobe</dd>
+          <dt>!dj blackout on / off</dt><dd>All lights off</dd>
+          <dt>!dj reset</dt><dd>Lights back to normal</dd>
+          <dt>!dj fire</dt><dd>Flame jets (<code>!dj fire chase</code> for a left-to-right chase)</dd>
+          <dt>!dj co2</dt><dd>CO2 geysers</dd>
+          <dt>!dj sparks</dt><dd>Spark fountains</dd>
+          <dt>!dj falls</dt><dd>Spark waterfall off the roof</dd>
+          <dt>!dj fireworks 10</dt><dd>Fireworks, up to 20</dd>
+          <dt>!dj pyro</dt><dd>Everything at once</dd>
+          <dt>!dj cam wide</dt><dd>auto, wide, sweep, over, close, back (stage)</dd>
+          <dt>!dj cut</dt><dd>Next camera shot now</dd>
+          <dt>!dj pace fast</dt><dd>How often auto cuts: slow, normal, fast</dd>
+          <dt>!dj zoom 1.5</dt><dd>Zoom, 0.7 to 2.4 (<code>pan</code> −13 to 13, <code>height</code> −3 to 5)</dd>
+          <dt>!dj frame</dt><dd>Reset zoom and framing</dd>
+          <dt>!dj shake</dt><dd>Camera shake</dd>
+          <dt>!dj focus name</dt><dd>Close-up on a viewer's Bibo</dd>
+          <dt>!dj screens heart</dt><dd>Side screens: auto, meter, stripes, checker, ripple, solid, off, heart, star, smile, note, bolt, fire, arrow, diamond</dd>
+          <dt>!dj screens text HELLO</dt><dd>Scrolling text on the side screens</dd>
+          <dt>!dj help / help off</dt><dd>Show or hide the commands card</dd>
+          <dt>!dj helpevery 10</dt><dd>Auto-show the card every N minutes (0 = never)</dd>
+          <dt>!dj jetpack name</dt><dd>Launch someone's jetpack (<code>all</code> = everyone)</dd>
+          <dt>!dj kick name</dt><dd>Remove someone's Bibo (bans and timeouts do this automatically)</dd>
+          <dt>!dj bpm 128</dt><dd>Set the tempo</dd>
+          <dt>!dj beat</dt><dd>Press on the 1 to line the lights up with the music</dd>
+          <dt>!dj nudge 20</dt><dd>Shift the beat by milliseconds (negative = earlier)</dd>
+        </dl>
+      </details>
+    </section>
   </main>
 
   <main id="desk" class="desk" hidden>

@@ -102,3 +102,20 @@ button.flash { animation: flash 0.35s; }
 .bpm { display: grid; place-items: center; background: var(--card2); border-radius: 12px; padding: 4px 18px; }
 .bpm output { font: 400 30px 'Bowlby One', 'Arial Black', sans-serif; }
 .bpm small { color: var(--dim); font-size: 12px; }
+
+.cmds summary { display: flex; align-items: baseline; gap: 10px; cursor: pointer; list-style: none; }
+.cmds summary::-webkit-details-marker { display: none; }
+.cmds summary h2 { margin: 0; }
+.cmds summary span { color: var(--dim); font-size: 13px; }
+.cmds details[open] summary span { display: none; }
+.cmds h3 { font: 800 15px Figtree, system-ui, sans-serif; color: var(--gold); margin: 18px 0 8px; }
+.cmds dl { display: grid; grid-template-columns: minmax(150px, max-content) 1fr; gap: 6px 14px; margin: 0; font-size: 14px; }
+.cmds dt { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; color: var(--ink); }
+.cmds dt i { color: var(--dim); font-style: normal; }
+.cmds dd { margin: 0; color: var(--dim); font-weight: 600; }
+.cmds dd b { color: var(--ink); }
+.cmds code { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: var(--card2); border-radius: 4px; padding: 0 4px; }
+@media (max-width: 640px) {
+  .cmds dl { grid-template-columns: 1fr; gap: 2px; }
+  .cmds dd { margin-bottom: 8px; }
+}

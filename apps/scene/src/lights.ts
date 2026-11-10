@@ -127,8 +127,10 @@ export class Lights {
     const look = activeLook(bar);
     // Strobe: beams and stage LEDs only (never a full-screen flash), at the designer's speed.
     const strobe = L.strobe && !reduceMotion ? strobeLevel(beat, L.strobeRate) : 1;
-    const power = L.blackout ? 0 : clamp(0.35 + S.E * 0.75, 0, 1.25) * (1 - S.dim * 0.85) * L.intensity * strobe;
-    const rig = 0.45 + 0.55 * S.mShow;
+    // A look picked on the desk always gets the whole rig at a good level, even when the crowd is quiet.
+    const picked = S.look !== 'auto';
+    const power = L.blackout ? 0 : clamp(Math.max(picked ? 0.85 : 0, 0.35 + S.E * 0.75), 0, 1.25) * (1 - S.dim * 0.85) * L.intensity * strobe;
+    const rig = picked ? 1 : 0.45 + 0.55 * S.mShow;
     const B = this.beams, G = this.glows;
     B.uTime.value = tReal;
     B.begin();
@@ -164,13 +166,15 @@ export class Lights {
       const o = back ? (up ? [s * 36, 34, -15] : [s * 34, 32.8, -15]) : (up ? [s * 70, 7, 100] : [s * 34, 17, 0]);
       let g: number[], pool = false;
       if (back) {
-        if (up) g = [o[0] + ang * 75, 62 + tilt * 55, -15];
-        else { g = [s * 9 + ang * 20, 0, S.maxZ * clamp(tilt, 0.05, 1)]; pool = true; }
-      } else if (up) g = [o[0] + ang * 130, 90 + tilt * 80, 100];
-      else { g = [ang * 24 + s * 8, 0, S.midZ + tilt * S.maxZ * 1.2]; pool = true; }
+        // Seen from the crowd: the upper heads fan out over the audience toward the camera (low tilt)
+        // or up into the sky (high tilt), so their movement crosses the frame.
+        if (up) g = [o[0] + ang * 70, 10 + tilt * 70, -15 + (1 - tilt) * (S.maxZ + 45)];
+        else { g = [s * 10 + ang * 32, 0, 1 + S.maxZ * clamp(tilt, 0.05, 1.1)]; pool = true; }
+      } else if (up) g = [o[0] + ang * 130, 60 + tilt * 110, 100 - (1 - tilt) * 70];
+      else { g = [ang * 30 + s * 8, 0, S.midZ + tilt * S.maxZ * 1.2]; pool = true; }
       const c = pal[i % 2];
       const dist = Math.hypot(g[0] - o[0], g[1] - o[1], g[2] - o[2]);
-      const a = Math.min(1, amp * power * (up ? 0.95 : 0.34) * (0.75 + 0.25 * kick));
+      const a = Math.min(1, amp * power * (up ? 0.95 : back ? 0.6 : 0.34) * (0.75 + 0.25 * kick));
       B.add(o, g, 0.22, 0.4 + dist * (up ? 0.03 : 0.04), c, a, pool ? 0.12 : 0, 1, 1, up ? 0.8 : 0.25);
       if (pool) {
         G.add(g[0], 0.03, g[2], 15, 6, c[0], c[1], c[2], Math.min(0.55, amp * power * 0.45), 2);

@@ -433,5 +433,5 @@ export { ACTIONS };
 
 /** The light look running now: the designer's pick, or auto (changes every 4 bars). */
 export function activeLook(bar: number): string {
-  return S.look === 'auto' ? LOOKS[((Math.floor(bar / 4) % 5) + 5) % 5] : S.look;
+  return S.look === 'auto' ? LOOKS[((Math.floor(bar / 4) % LOOKS.length) + LOOKS.length) % LOOKS.length] : S.look;
 }

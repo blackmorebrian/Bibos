@@ -23,6 +23,10 @@ export class Overlay {
   private placed: number[][] = [];
   /** Right edge of the top-left "N BIBOS" tag, so the hype meter never covers it. */
   private tagRight = 0;
+  /** Vertical (TikTok / Reels / Shorts): sized off the width, and kept clear of the apps' own
+      buttons and captions (top bar, right-side buttons, bottom caption area). */
+  private portrait = false;
+  private safe = { top: 0, right: 0, bottom: 0 };
 
   constructor() {
     this.canvas.id = 'overlay';
@@ -36,7 +40,10 @@ export class Overlay {
     const { g, W, H } = this;
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, W, H);
-    const k = H / 1080;
+    this.portrait = H > W;
+    const k = this.portrait ? W / 1080 : H / 1080;
+    const m = 26 * k;
+    this.safe = this.portrait ? { top: 150 * k, right: 150 * k, bottom: 430 * k } : { top: m, right: m, bottom: m };
 
     if (params.labels) this.labels(cam, t, beat, k);
     this.tags(k);
@@ -100,7 +107,8 @@ export class Overlay {
   private joinToasts(t: number, k: number): void {
     const { g, H } = this;
     const fs = 26 * k, h = fs * 1.75, m = 26 * k;
-    let y = H - m - h;
+    // Portrait: stack above the "TYPE !BIBO" tag, which sits in the bottom safe line.
+    let y = this.portrait ? H - this.safe.bottom - 28 * k * 1.8 - 14 * k - h : H - m - h;
     g.textBaseline = 'middle';
     g.textAlign = 'left';
     for (let i = joins.length - 1; i >= 0; i--) {
@@ -163,7 +171,7 @@ export class Overlay {
     const slideIn = reduceMotion ? 1 : 1 - Math.pow(1 - Math.min(1, age / 0.45), 3);
     const slideOut = reduceMotion ? 1 : Math.min(1, (HELP_SECONDS - age) / 0.45);
     const s = Math.min(slideIn, slideOut);
-    const X = 26 * k - (1 - s) * (W + 60 * k), Y = Math.max(96 * k, (this.H - Hc) / 2 - 40 * k);
+    const X = 26 * k - (1 - s) * (W + 60 * k), Y = Math.max(this.portrait ? this.safe.top + 180 * k : 96 * k, (this.H - Hc) / 2 - 40 * k);
     g.save();
     g.translate(X, Y);
     g.fillStyle = '#ff3d81'; g.fillRect(12 * k, 12 * k, W, Hc);
@@ -214,19 +222,23 @@ export class Overlay {
     // Live, only real viewers count.
     const n = live ? joinedCount() : crowd.length;
     const label = n === 0 ? 'BE THE FIRST IN THE CROWD' : `${n} BIBO${n === 1 ? '' : 'S'} IN THE CROWD`;
-    this.tagRight = tag(label, m, m, PAPER, INK, 28 * k);
+    this.tagRight = tag(label, m, this.safe.top, PAPER, INK, 28 * k);
     const alt = live && Math.floor(S.t / 8) % 2 === 1;
-    tag(alt ? 'TYPE !BIBOHELP TO CUSTOMIZE' : 'TYPE !BIBO TO GET IN', -m, H - m - 28 * k * 1.8, '#ff3d81', PAPER, 28 * k);
+    const call = alt ? 'TYPE !BIBOHELP TO CUSTOMIZE' : 'TYPE !BIBO TO GET IN';
+    if (this.portrait) tag(call, m, H - this.safe.bottom - 28 * k * 1.8, '#ff3d81', PAPER, 28 * k);
+    else tag(call, -m, H - m - 28 * k * 1.8, '#ff3d81', PAPER, 28 * k);
   }
 
   private meter(t: number, k: number): void {
     const { g, W, H } = this;
     const h = 48 * k, v = S.mShow, lit = t - S.hypeAt < 3, pad = 7 * k;
     // Centered, but always clear of the "N BIBOS" tag (fonts differ between machines).
-    const left = Math.max((W - W * 0.36) / 2, this.tagRight + 24 * k + pad);
-    const w = Math.min(W * 0.36, W - 26 * k - pad - left);
+    // Landscape: centered, but always clear of the "N BIBOS" tag (fonts differ between machines).
+    // Portrait: its own row under the tag, across the width.
+    const left = this.portrait ? 26 * k + pad : Math.max((W - W * 0.36) / 2, this.tagRight + 24 * k + pad);
+    const w = this.portrait ? W - 2 * (26 * k + pad) : Math.min(W * 0.36, W - 26 * k - pad - left);
     const sh = v > 0.82 && !reduceMotion ? Math.sin(t * 38) * 4 * k * (v - 0.82) / 0.18 : 0;
-    const x = left + sh, y = 30 * k;
+    const x = left + sh, y = this.portrait ? this.safe.top + 28 * k * 1.8 + 22 * k : 30 * k;
     g.fillStyle = PAPER; g.fillRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
     g.fillStyle = '#1c1266'; g.fillRect(x, y, w, h);
     const gr = g.createLinearGradient(x, 0, x + w, 0);
@@ -244,7 +256,8 @@ export class Overlay {
       g.save();
       g.translate(W / 2, H * 0.3); g.rotate(-0.045); g.scale(sc, sc);
       g.globalAlpha = age > 2.5 ? (3 - age) / 0.5 : 1;
-      const fs = 92 * k;
+      g.font = `400 ${92 * k}px ${DISPLAY}`;
+      const fs = 92 * k * Math.min(1, (W * 0.82) / (g.measureText('CHAT EARNED THIS').width + 92 * k * 1.1));
       g.font = `400 ${fs}px ${DISPLAY}`;
       const lbl = 'CHAT EARNED THIS', tw = g.measureText(lbl).width + fs * 1.1, th = fs * 1.75;
       g.fillStyle = '#ff3d81'; g.fillRect(-tw / 2 + 12 * k, -th / 2 + 12 * k, tw, th);

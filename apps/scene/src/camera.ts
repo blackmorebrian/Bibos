@@ -13,6 +13,9 @@ const SHOTS: Record<ShotName, (t: number) => Shot> = {
   close: (t) => { const a = S.target || crowd[0] || { x: 0, z: 4 }; return { p: [a.x + Math.sin(t * 0.35) * 0.7, 2.05, a.z - 3.7], l: [a.x, 1.55, a.z], f: 0.92 }; },
   back: (t) => ({ p: [Math.sin(t * 0.11) * 6, 8, S.maxZ + 12], l: [Math.sin(t * 0.11) * 2, 13, -17], f: 0.72 }),
 };
+/** Vertical framing: share of the 16:9 width kept, and per-shot aim tweaks (world units). */
+const VERTICAL_WIDTH: Record<ShotName, number> = { wide: 0.6, sweep: 0.5, over: 0.6, close: 0.45, back: 0.6 };
+const VERTICAL_TILT: Record<ShotName, number> = { wide: 1.2, sweep: 2.6, over: -1, close: 0.7, back: -2 };
 export const SHOT_NAMES = Object.keys(SHOTS) as ShotName[];
 
 function pickTarget(): Bibo | null {
@@ -54,7 +57,16 @@ export function updateCamera(cam: THREE.PerspectiveCamera, t: number, bar: numbe
   sh.p[1] = Math.max(0.8, sh.p[1] + my); sh.l[1] += my;
   if (S.shake > 0.01 && !reduceMotion) { sh.l[0] += (rnd() - 0.5) * S.shake * 0.9; sh.l[1] += (rnd() - 0.5) * S.shake * 0.9; }
   const fm = sh.f * S.zoom * push;
-  cam.fov = (2 * Math.atan(1 / (2.2 * fm)) * 180) / Math.PI;
+  let half = 1 / (2.2 * fm); // tan of half the vertical view, as designed for 16:9
+  if (cam.aspect < 1) {
+    // Vertical (phones): keep a good share of the 16:9 shot's width, so the stage and crowd
+    // still fit across, and let the extra height show more sky and crowd.
+    const wide = half * (16 / 9) * VERTICAL_WIDTH[S.shot];
+    half = Math.min(wide / cam.aspect, Math.tan((50 * Math.PI) / 180));
+    // Aim a little lower: the crowd is the subject, the sky is the filler.
+    sh.l[1] += VERTICAL_TILT[S.shot];
+  }
+  cam.fov = (2 * Math.atan(half) * 180) / Math.PI;
   cam.position.set(sh.p[0], sh.p[1], sh.p[2]);
   cam.lookAt(sh.l[0], sh.l[1], sh.l[2]);
   cam.updateProjectionMatrix();

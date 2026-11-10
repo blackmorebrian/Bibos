@@ -19,7 +19,7 @@ interface SceneState {
   id?: string; layout?: string;
   look: string; colors: [string, string] | null; intensity: number; speed: number; lasers: string;
   strobe: boolean; blackout: boolean; lights: boolean; bpm: number; shot: string; auto: boolean; viewers: number;
-  helpUp?: boolean; glow?: number; helpEvery?: number; zoom?: number; pan?: number; height?: number; pace?: string; screens?: string; screenText?: string;
+  helpUp?: boolean; strobeRate?: number; glow?: number; helpEvery?: number; zoom?: number; pan?: number; height?: number; pace?: string; screens?: string; screenText?: string;
 }
 let state: SceneState | null = null;
 /** Every crowd that has reported lately (widescreen and vertical OBS sources). */
@@ -225,6 +225,7 @@ function render(): void {
   mark('lasers', s.lasers);
   mark('shot', s.auto ? 'auto' : s.shot);
   mark('pace', s.pace ?? 'normal');
+  mark('strobeRate', String(s.strobeRate ?? 1));
   mark('helpEvery', String(s.helpEvery ?? 10));
   $('helpShow').classList.toggle('on', !!s.helpUp);
   mark('screens', s.screens ?? 'auto');

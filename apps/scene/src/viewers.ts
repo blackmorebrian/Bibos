@@ -13,6 +13,7 @@ import {
 } from './sim';
 import { autoCut, cutTo, SHOT_NAMES } from './camera';
 import { SCREEN_MODES } from './screens';
+import { LOOKS as LIGHT_LOOKS, STROBE_RATES } from './looks';
 import { params } from './params';
 import type { ChatMessage } from './twitch';
 
@@ -149,7 +150,7 @@ const PART_CMDS: Record<string, Part> = {
 let helpAsked = -99;
 
 /* ---------- DJ controls: "!dj <command>" from you or your mods (Stream Deck "Chat Message" keys) ---------- */
-const LOOK_NAMES = ['auto', 'fan', 'cross', 'chase', 'wave', 'pulse'];
+const LOOK_NAMES = ['auto', ...LIGHT_LOOKS];
 function djCommand(args: string[]): void {
   const [what = '', ...rest] = args.map((a) => a.toLowerCase());
   applyCommand(what, rest.join(' '), params.beatlag);
@@ -177,9 +178,15 @@ export function applyCommand(what: string, arg: string, lag = 0): void {
     case 'glow': { const v = parseFloat(arg); if (v >= 0 && v <= 2) L.glow = v; break; }
     case 'speed': { const v = parseFloat(arg); if (v >= 0.1 && v <= 4) L.speed = v; break; }
     case 'lasers': if (['auto', 'on', 'off'].includes(arg)) L.lasers = arg as 'auto' | 'on' | 'off'; break;
-    case 'strobe': L.strobe = onOff(arg, L.strobe); break;
+    case 'strobe': {
+      // "!dj strobe 2" = on at 2 flashes per beat; on/off/toggle otherwise.
+      const r = parseFloat(arg);
+      if (STROBE_RATES.includes(r)) { L.strobeRate = r; L.strobe = true; } else L.strobe = onOff(arg, L.strobe);
+      break;
+    }
+    case 'strobespeed': { const r = parseFloat(arg); if (STROBE_RATES.includes(r)) L.strobeRate = r; break; }
     case 'blackout': L.blackout = onOff(arg, L.blackout); break;
-    case 'reset': Object.assign(L, { colors: null, intensity: 1, speed: 1, glow: 1, lasers: 'auto', strobe: false, blackout: false }); S.look = 'auto'; break;
+    case 'reset': Object.assign(L, { colors: null, intensity: 1, speed: 1, glow: 1, strobeRate: 1, lasers: 'auto', strobe: false, blackout: false }); S.look = 'auto'; break;
     case 'drop': drop(); break;
     case 'lights':
       if (['down', 'off', 'dark'].includes(arg)) { if (!S.lights) toggleLights(); }

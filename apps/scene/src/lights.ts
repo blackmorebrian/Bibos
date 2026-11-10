@@ -10,6 +10,7 @@ import { S, reduceMotion, activeLook } from './sim';
 import { PALS } from './world';
 import { SpriteBatch, glowTexture, rgb } from './sprites';
 import { glows } from './bloom';
+import { aim, strobeLevel } from './looks';
 
 const MAX_BEAMS = 220;
 const STRIDE = 16;
@@ -124,8 +125,8 @@ export class Lights {
     const ph = ((beat % 1) + 1) % 1, kick = Math.pow(1 - ph, 2.4), bar = Math.floor(beat / 4);
     const pal = (L.colors ?? PALS[((Math.floor(bar / 8) % 4) + 4) % 4]).map(rgb);
     const look = activeLook(bar);
-    // Strobe: beams only, once per beat (kept slow on purpose; never full-screen).
-    const strobe = L.strobe && !reduceMotion ? (ph < 0.16 ? 1.25 : 0.06) : 1;
+    // Strobe: beams and stage LEDs only (never a full-screen flash), at the designer's speed.
+    const strobe = L.strobe && !reduceMotion ? strobeLevel(beat, L.strobeRate) : 1;
     const power = L.blackout ? 0 : clamp(0.35 + S.E * 0.75, 0, 1.25) * (1 - S.dim * 0.85) * L.intensity * strobe;
     const rig = 0.45 + 0.55 * S.mShow;
     const B = this.beams, G = this.glows;
@@ -158,12 +159,7 @@ export class Lights {
     for (let i = 0; i < N; i++) {
       const u = i / (N - 1), s = u * 2 - 1;
       if (Math.abs(s) > rig + 0.02) continue;
-      let ang = 0, tilt = 0.5, amp = 1;
-      if (look === 'fan') { ang = s * (0.7 + 0.25 * Math.sin(t * 0.6)); tilt = 0.55 + 0.2 * Math.sin(t * 0.8); }
-      else if (look === 'cross') ang = (i % 2 ? 1 : -1) * (0.2 + 0.7 * Math.sin(t * 0.9 + u));
-      else if (look === 'chase') { ang = s * 0.6; amp = Math.pow(Math.max(0, Math.cos((u * 3 - beat * 0.5) * Math.PI)), 2) * 1.2 + 0.12; }
-      else if (look === 'wave') { ang = s * 0.55; tilt = 0.5 + 0.4 * Math.sin(beat * Math.PI * 0.5 - u * 5); }
-      else { ang = s * (0.12 + 0.75 * kick); tilt = 0.35 + 0.25 * kick; amp = 0.5 + 0.7 * kick; }
+      const { ang, tilt, amp } = aim(look, i, u, beat, kick, t);
       const up = i % 2 === 0;
       const o = back ? (up ? [s * 36, 34, -15] : [s * 34, 32.8, -15]) : (up ? [s * 70, 7, 100] : [s * 34, 17, 0]);
       let g: number[], pool = false;

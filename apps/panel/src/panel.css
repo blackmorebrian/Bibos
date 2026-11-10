@@ -50,6 +50,7 @@ header h1 { flex: 1; }
 .span3 { grid-column: span 3; }
 .span4 { grid-column: span 4; }
 .label { align-self: center; color: var(--dim); font-size: 14px; text-align: right; }
+.sub { font: 800 13px Figtree, system-ui, sans-serif; color: var(--dim); margin: 4px 0 -2px; text-transform: uppercase; letter-spacing: 0.5px; }
 .hint { margin: 0; color: var(--dim); font-size: 13px; }
 .pics button { display: grid; justify-items: center; gap: 6px; padding: 10px 6px; }
 .pix { display: grid; grid-template-columns: repeat(9, 4px); grid-auto-rows: 4px; gap: 1px; }

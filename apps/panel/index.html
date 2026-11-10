@@ -47,12 +47,13 @@
           <dt>!dj hype</dt><dd>Hype finale: meter to full</dd>
           <dt>!dj lights down / up</dt><dd>Lights down (lighters &amp; phones) or back up</dd>
           <dt>!dj colors ff3d81 19d3c5</dt><dd>Light colors as two hex color codes, or <code>auto</code> to follow the show</dd>
-          <dt>!dj look fan</dt><dd>auto, fan, cross, chase, wave, pulse</dd>
+          <dt>!dj look fan</dt><dd>Movement: fan, cross, wave, sweep, circle, ballyhoo, snap, tilt. Chases: chase, bounce, center, random, pulse. Or auto.</dd>
           <dt>!dj intensity 1.5</dt><dd>Brightness, 0 to 2</dd>
           <dt>!dj glow 1</dt><dd>Light glow, 0 to 2</dd>
           <dt>!dj speed 2</dt><dd>Light movement speed, 0.1 to 4</dd>
           <dt>!dj lasers on</dt><dd>on, off or auto</dd>
-          <dt>!dj strobe on / off</dt><dd>Beam strobe</dd>
+          <dt>!dj strobe on / off</dt><dd>Strobe on the beams and stage LEDs</dd>
+          <dt>!dj strobe 2</dt><dd>Strobe on at a speed: 0.5 (slow), 1 (every beat), 2 (fast), 4 (faster)</dd>
           <dt>!dj blackout on / off</dt><dd>All lights off</dd>
           <dt>!dj reset</dt><dd>Lights back to normal</dd>
           <dt>!dj fire</dt><dd>Flame jets (<code>!dj fire chase</code> for a left-to-right chase)</dd>
@@ -115,10 +116,24 @@
       <h2>Looks</h2>
       <div class="grid g6" data-group="look">
         <button data-cmd="look" data-arg="auto">Auto</button>
+      </div>
+      <h3 class="sub">Movement</h3>
+      <div class="grid g4" data-group="look">
         <button data-cmd="look" data-arg="fan">Fan</button>
         <button data-cmd="look" data-arg="cross">Cross</button>
-        <button data-cmd="look" data-arg="chase">Chase</button>
         <button data-cmd="look" data-arg="wave">Wave</button>
+        <button data-cmd="look" data-arg="sweep">Sweep</button>
+        <button data-cmd="look" data-arg="circle">Circles</button>
+        <button data-cmd="look" data-arg="ballyhoo">Ballyhoo</button>
+        <button data-cmd="look" data-arg="snap">Snap</button>
+        <button data-cmd="look" data-arg="tilt">Tilt hits</button>
+      </div>
+      <h3 class="sub">Chases</h3>
+      <div class="grid g5" data-group="look">
+        <button data-cmd="look" data-arg="chase">Left → right</button>
+        <button data-cmd="look" data-arg="bounce">Bounce</button>
+        <button data-cmd="look" data-arg="center">Center out</button>
+        <button data-cmd="look" data-arg="random">Random</button>
         <button data-cmd="look" data-arg="pulse">Pulse</button>
       </div>
     </section>
@@ -148,9 +163,18 @@
         <button data-cmd="lasers" data-arg="off">Lasers off</button>
       </div>
       <div class="grid g3">
-        <button class="toggle" data-cmd="strobe" data-state="strobe">Beat strobe</button>
+        <button class="toggle" data-cmd="strobe" data-state="strobe">Strobe</button>
         <button class="toggle" data-cmd="blackout" data-state="blackout">Blackout</button>
         <button data-cmd="reset">Reset rig</button>
+      </div>
+      <div class="grid g5">
+        <span class="label">Strobe speed:</span>
+        <div class="grid g4 span4" data-group="strobeRate">
+          <button data-cmd="strobespeed" data-arg="0.5">Slow</button>
+          <button data-cmd="strobespeed" data-arg="1">Beat</button>
+          <button data-cmd="strobespeed" data-arg="2">Fast</button>
+          <button data-cmd="strobespeed" data-arg="4">Faster</button>
+        </div>
       </div>
     </section>
 

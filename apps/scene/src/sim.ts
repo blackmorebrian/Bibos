@@ -9,6 +9,7 @@ import {
 } from '@bibos/shared';
 import { params } from './params';
 import * as P from './pyro';
+import { LOOKS } from './looks';
 
 export let rnd = mulberry(params.seed);
 export const pick = <T,>(a: readonly T[]): T => a[Math.floor(rnd() * a.length)];
@@ -64,6 +65,8 @@ export const S = {
     speed: 1,
     lasers: 'auto' as 'auto' | 'on' | 'off',
     strobe: false,
+    /** Strobe flashes per beat: 0.5, 1, 2 or 4. */
+    strobeRate: 1,
     blackout: false,
     glow: 1,
   },
@@ -429,7 +432,6 @@ export function everyone(act: ActionId): void {
 export { ACTIONS };
 
 /** The light look running now: the designer's pick, or auto (changes every 4 bars). */
-export const LOOKS = ['fan', 'cross', 'chase', 'wave', 'pulse'];
 export function activeLook(bar: number): string {
   return S.look === 'auto' ? LOOKS[((Math.floor(bar / 4) % 5) + 5) % 5] : S.look;
 }

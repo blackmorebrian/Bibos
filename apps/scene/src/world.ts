@@ -10,6 +10,7 @@ import { canvasTexture } from './sprites';
 import { params } from './params';
 import { IMAGES, textColumns } from './screens';
 import { glows } from './bloom';
+import { chaseLevel, strobeLevel } from './looks';
 
 export const PALS = [['#ff3d81', '#19d3c5'], ['#ffc21a', '#7c5cff'], ['#19d3c5', '#ff7a2f'], ['#ff4fd8', '#ffe066']];
 const WHITE = new THREE.Color('#ffffff');
@@ -387,17 +388,14 @@ export class World {
       col.set(off).lerp(this.tmpColor2.set(on), Math.min(1, v));
       if (v > 1) col.lerp(WHITE, (v - 1) * 1.5);
     };
-    const flash = ph < 0.16 ? 1 : 0.04; // strobe: one short hit per beat
+    const flash = strobeLevel(beat, L.strobeRate) * 0.8;
     let ri = 0;
     for (let k = 3; k >= 0; k--) {
       const r = 3 - k; // 0 = innermost ring
       let lv: number, c = r % 2 ? cB : cA;
       if (strobing) { lv = flash; c = PAPER; }
       else if (look === 'chase') lv = (r + Math.floor(beat * 2)) % 4 < 2 ? 1 : 0.05;
-      else if (look === 'cross') lv = (r + Math.floor(beat)) % 2 ? 1 : 0.15;
-      else if (look === 'wave') lv = 0.5 + 0.5 * Math.sin(beat * Math.PI - r * 1.2);
-      else if (look === 'pulse') lv = 0.12 + kick;
-      else lv = 0.65 + 0.35 * kick; // fan: steady, breathing on the kick
+      else lv = chaseLevel(look, r / 3, beat, kick, t);
       lit(c, lv, '#2c1ca3');
       for (let b = 0; b < 4; b++) this.rings.setColorAt(ri++, col);
     }
@@ -410,10 +408,11 @@ export class World {
       else if (look === 'chase') { // a bright head running left to right, twice a beat, with a tail
         const head = ((beat * 2) % 1 + 1) % 1, d = ((head - u) % 1 + 1) % 1;
         lv = d < 0.04 ? 1.25 : Math.max(0.06, 1 - d * 4); c = d < 0.04 ? PAPER : cA;
-      } else if (look === 'cross') lv = (i + Math.floor(beat)) % 2 ? 1 : 0.1;
-      else if (look === 'wave') lv = 0.5 + 0.5 * Math.sin(beat * Math.PI - u * 9);
-      else if (look === 'pulse') { lv = 0.08 + kick * 1.2; c = cA; }
-      else { lv = 0.7 + 0.3 * kick; c = u < 0.5 ? cA : cB; } // fan: split colors, steady
+      } else {
+        lv = chaseLevel(look, u, beat, kick, t);
+        if (look === 'fan') c = u < 0.5 ? cA : cB; // split colors
+        if (lv > 1.05) c = PAPER; // chase heads burn white
+      }
       lit(c, lv, '#241a7a');
       this.deckLeds.setColorAt(i, col);
     }

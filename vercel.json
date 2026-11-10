@@ -2,5 +2,17 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm install",
   "buildCommand": "npm run build -w @bibos/scene && npm run build -w @bibos/panel",
-  "outputDirectory": "apps/scene/dist"
+  "outputDirectory": "apps/scene/dist",
+  "redirects": [
+    {
+      "source": "/panel",
+      "destination": "/panel/",
+      "permanent": false
+    },
+    {
+      "source": "/desk",
+      "destination": "/panel/",
+      "permanent": false
+    }
+  ]
 }

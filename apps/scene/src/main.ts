@@ -186,6 +186,6 @@ requestAnimationFrame(frame);
 (window as any).__bibos = {
   S, crowd, crowdR, renderer, scene, camera, atlas, stats,
   /** Test hook: pretend someone typed in chat, e.g. __bibos.say('kevin', '!bibo') or say('kevin', 'Kappa', '25:0-4'). */
-  say: (login: string, text: string, emotes = '') =>
-    handleChat({ login: login.toLowerCase(), display: login, color: '', text, emotes: parseEmotes(emotes), mod: false, broadcaster: false }),
+  say: (login: string, text: string, emotes = '', broadcaster = false) =>
+    handleChat({ login: login.toLowerCase(), display: login, color: '', text, emotes: parseEmotes(emotes), mod: false, broadcaster }),
 };

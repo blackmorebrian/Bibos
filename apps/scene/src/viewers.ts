@@ -7,7 +7,8 @@ import {
   ACTIONS, BODY_COLORS, BODY_COLOR_NAMES, EXTRAS, HATS, HEADS, PATTERNS, SHIRT_COLORS, SHIRT_COLOR_NAMES,
   mulberry, type ActionId, type BiboLook,
 } from '@bibos/shared';
-import { S, crowd, emote, addFloat, liveChat, joins, makeBot, rnd, SEA, type Bibo } from './sim';
+import { S, crowd, emote, addFloat, liveChat, joins, makeBot, rnd, SEA, clock, drop, toggleLights, type Bibo, type ShotName } from './sim';
+import { cutTo, SHOT_NAMES } from './camera';
 import { params } from './params';
 import type { ChatMessage } from './twitch';
 
@@ -142,10 +143,44 @@ const PART_CMDS: Record<string, Part> = {
 };
 let helpAsked = -99;
 
+/* ---------- DJ controls: "!dj <command>" from you or your mods (Stream Deck "Chat Message" keys) ---------- */
+const LOOK_NAMES = ['auto', 'fan', 'cross', 'chase', 'wave', 'pulse'];
+function djCommand(args: string[]): void {
+  const [what = '', arg = ''] = args.map((a) => a.toLowerCase());
+  const now = performance.now() / 1000;
+  switch (what) {
+    case 'drop': drop(); break;
+    case 'lights':
+      if (['down', 'off', 'dark'].includes(arg)) { if (!S.lights) toggleLights(); }
+      else if (['up', 'on', 'bright'].includes(arg)) { if (S.lights) toggleLights(); }
+      else toggleLights();
+      break;
+    case 'dark': if (!S.lights) toggleLights(); break;
+    case 'bright': if (S.lights) toggleLights(); break;
+    case 'hype': S.hypeAt = -99; S.meter = 1; break;
+    case 'bpm': {
+      const b = parseFloat(arg);
+      if (b >= 60 && b <= 200) { const beat = clock.beatAt(now); clock.bpm = b; clock.t0 = now - (beat * 60) / b; } // keep phase
+      break;
+    }
+    // Press on a downbeat. Chat takes a moment to arrive, so assume it was sent a little earlier.
+    case 'beat': case 'sync': clock.t0 = now - params.beatlag; break;
+    case 'nudge': { const ms = parseFloat(arg); if (Math.abs(ms) <= 500) clock.nudge(ms / 1000); break; }
+    case 'cam': case 'camera':
+      if (arg === 'auto') { S.auto = true; S.nextCut = Math.floor(S.beat / 4) + 1; }
+      else if ((SHOT_NAMES as string[]).includes(arg)) { S.auto = false; cutTo(arg as ShotName); }
+      break;
+    case 'look': if (LOOK_NAMES.includes(arg)) S.look = arg; break;
+    case 'kick': if (arg) removeViewer(arg.replace(/^@/, '')); break;
+    case 'help': S.helpAt = S.t; break;
+  }
+}
+
 export function handleChat(m: ChatMessage): void {
   if (isBot(m.login)) return;
   const [first = '', ...args] = m.text.trim().split(/\s+/);
   const cmd = first.toLowerCase();
+  if (cmd === '!dj') { if (m.broadcaster || m.mod) djCommand(args); return; }
   let a = byLogin.get(m.login) ?? null;
 
   const restyle = (change: (look: BiboLook) => boolean) => {

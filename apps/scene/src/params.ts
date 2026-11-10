@@ -32,6 +32,8 @@ export const params = {
   channel: (q.get('channel') ?? '').replace(/^#/, '').trim().toLowerCase(),
   /** Minutes between automatic "how to join" cards (0 = only on !bibohelp or the C key). */
   help: num('help', 10),
+  /** Seconds a chat message takes to reach the scene; "!dj beat" subtracts it so the downbeat lands right. */
+  beatlag: num('beatlag', 0.3),
   /** Free-text tag stored with bench results (e.g. "streaming-nvenc"). */
   tag: q.get('tag') ?? '',
 };

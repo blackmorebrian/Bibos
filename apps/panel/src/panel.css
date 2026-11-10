@@ -48,6 +48,7 @@ header h1 { flex: 1; }
 .g6 { grid-template-columns: repeat(6, 1fr); }
 .g2 { grid-template-columns: repeat(2, 1fr); }
 .span3 { grid-column: span 3; }
+.span4 { grid-column: span 4; }
 .label { align-self: center; color: var(--dim); font-size: 14px; text-align: right; }
 .hint { margin: 0; color: var(--dim); font-size: 13px; }
 .pics button { display: grid; justify-items: center; gap: 6px; padding: 10px 6px; }
@@ -62,6 +63,7 @@ header h1 { flex: 1; }
   .g4 { grid-template-columns: repeat(2, 1fr); }
   .g5 > .label { display: none; }
   .g5 > .span3 { grid-column: span 3; }
+  .g5 > .span4 { grid-column: 1 / -1; grid-template-columns: repeat(4, 1fr); }
 }
 
 button {

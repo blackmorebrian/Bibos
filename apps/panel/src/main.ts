@@ -18,7 +18,7 @@ const loginMsg = $('loginMsg'), dot = $('dot'), statusText = $('statusText');
 interface SceneState {
   look: string; colors: [string, string] | null; intensity: number; speed: number; lasers: string;
   strobe: boolean; blackout: boolean; lights: boolean; bpm: number; shot: string; auto: boolean; viewers: number;
-  zoom?: number; pan?: number; height?: number; pace?: string; screens?: string; screenText?: string;
+  helpUp?: boolean; helpEvery?: number; zoom?: number; pan?: number; height?: number; pace?: string; screens?: string; screenText?: string;
 }
 let state: SceneState | null = null;
 let ws: WebSocket | null = null;
@@ -210,6 +210,8 @@ function render(): void {
   mark('lasers', s.lasers);
   mark('shot', s.auto ? 'auto' : s.shot);
   mark('pace', s.pace ?? 'normal');
+  mark('helpEvery', String(s.helpEvery ?? 10));
+  $('helpShow').classList.toggle('on', !!s.helpUp);
   mark('screens', s.screens ?? 'auto');
   const cur = s.colors ? s.colors.join(',').toLowerCase() : 'auto';
   sw.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.classList.toggle('on', b.dataset.colors === cur));

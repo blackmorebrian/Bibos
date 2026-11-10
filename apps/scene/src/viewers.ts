@@ -220,7 +220,11 @@ export function applyCommand(what: string, arg: string, lag = 0): void {
     }
     case 'look': if (LOOK_NAMES.includes(arg)) S.look = arg; break;
     case 'kick': if (arg) removeViewer(arg.replace(/^@/, '')); break;
-    case 'help': S.helpAt = S.t; break;
+    case 'help':
+      if (arg === 'off' || arg === 'hide') { if (S.t - S.helpAt < HELP_SECONDS - 0.5) S.helpAt = S.t - HELP_SECONDS + 0.45; } // slide it away now
+      else S.helpAt = S.t;
+      break;
+    case 'helpevery': { const v = parseFloat(arg); if (v >= 0 && v <= 60) S.helpEvery = v; break; }
     case 'fire': case 'flames': pyro(arg === 'chase' ? 'chase' : 'fire'); break;
     case 'co2': case 'geyser': case 'smoke': pyro('co2'); break;
     case 'sparks': pyro('sparks'); break;

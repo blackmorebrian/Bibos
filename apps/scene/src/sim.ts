@@ -72,6 +72,8 @@ export const S = {
   screens: { mode: 'auto', text: '' },
   /** When the "how to join" commands card last appeared (first auto-show ~30 s after load). */
   helpAt: -(Math.max(1, params.help) * 60) + 30,
+  /** Minutes between automatic commands cards (0 = never); the light desk can change it. */
+  helpEvery: params.help,
   midZ: 8,
   maxZ: 20,
   K: 20,
@@ -334,7 +336,7 @@ export function simTick(dt: number): void {
   S.msgDebt = Math.min(S.msgDebt, 5);
   S.heat *= Math.exp(-dt / 6);
   let target: number, waveNeed: number;
-  if (live && params.help > 0 && t - S.helpAt > params.help * 60) S.helpAt = t;
+  if (live && S.helpEvery > 0 && t - S.helpAt > S.helpEvery * 60) S.helpAt = t;
   if (live) {
     // Relative to this channel's usual activity: ~normal chat sits around 0.4,
     // about double the usual rate pushes toward 1 and fills the meter.

@@ -8,6 +8,7 @@ import {
   clamp, mulberry, type ActionId, type BiboLook,
 } from '@bibos/shared';
 import { params } from './params';
+import * as P from './pyro';
 
 export let rnd = mulberry(params.seed);
 export const pick = <T,>(a: readonly T[]): T => a[Math.floor(rnd() * a.length)];
@@ -234,8 +235,6 @@ function countActive(): number {
 /** Recent joins, for the on-screen "X joined" toasts. */
 export const joins: { name: string; color: string; at: number }[] = [];
 
-export interface Firework { x: number; y: number; at: number; c: string; s: number }
-export const fireworks: Firework[] = [];
 export interface Confetto { x: number; y: number; z: number; v: number; ph: number; c: string; sz: number }
 export const confetti: Confetto[] = [];
 const CF = ['#ff3d81', '#ffc21a', '#19d3c5', '#ffffff', '#7c5cff', '#ff7a2f'];
@@ -244,9 +243,17 @@ export function spawnConfetti(n: number): void {
     confetti.push({ x: (rnd() - 0.5) * 28, y: 6 + rnd() * 9, z: rnd() * 24, v: 1.6 + rnd() * 1.6, ph: rnd() * Math.PI * 2, c: CF[i % CF.length], sz: 0.14 + rnd() * 0.14 });
   }
 }
-function addFireworks(n: number, spread: number): void {
+/* ---------- pyro: one place that decides what fires when ---------- */
+export type PyroKind = 'fire' | 'chase' | 'co2' | 'sparks' | 'falls' | 'fireworks' | 'all';
+export function pyro(kind: PyroKind, n = 6): void {
   if (reduceMotion) return;
-  for (let i = 0; i < n; i++) fireworks.push({ x: 0.08 + rnd() * 0.84, y: 0.1 + rnd() * spread, at: S.t + i * 0.2, c: CF[i % CF.length], s: rnd() * Math.PI * 2 });
+  const t = S.t;
+  if (kind === 'fire' || kind === 'all') P.fire(t);
+  if (kind === 'chase') P.fire(t, true);
+  if (kind === 'co2' || kind === 'all') P.co2(t);
+  if (kind === 'sparks' || kind === 'all') P.sparks(t);
+  if (kind === 'falls' || kind === 'all') P.falls(t);
+  if (kind === 'fireworks' || kind === 'all') P.fireworks(t, n);
 }
 
 export function hypeBurst(): void {
@@ -255,7 +262,12 @@ export function hypeBurst(): void {
   S.pyro = 1;
   S.flash = 0.4;
   spawnConfetti(300);
-  addFireworks(9, 0.22);
+  // The finale: fireworks volley, sparks, then a flame chase and a second volley.
+  pyro('fireworks', 14);
+  pyro('sparks');
+  pyro('falls');
+  P.fire(S.t + 0.5, true);
+  P.fireworks(S.t + 2.2, 8);
   const pool: readonly string[] = live && S.recentEmotes.length ? S.recentEmotes : PLACEHOLDER_EMOTES;
   crowd.forEach((a, i) => {
     emote(a, 'jump', rnd() * 1.2 - 0.4);
@@ -271,7 +283,11 @@ export function drop(): void {
   S.shake = 1;
   S.pyro = 1;
   if (S.lights) toggleLights();
-  addFireworks(7, 0.26);
+  // Everything at once, then a second hit of fire and CO2 one beat later.
+  pyro('all', 8);
+  const beat = 60 / clock.bpm;
+  P.fire(S.t + beat * 2, true);
+  P.co2(S.t + beat * 4);
   for (const a of crowd) emote(a, 'jump', rnd() * 1.4 - 0.4);
   spawnConfetti(380);
 }
@@ -341,8 +357,13 @@ export function simTick(dt: number): void {
   S.pyro *= Math.exp(-dt * 2.2);
   S.co2 = Math.max(S.co2 * Math.exp(-dt * 1.4), S.pyro * 0.9);
   const bph = ((S.beat % 1) + 1) % 1, win = (dt * clock.bpm) / 60;
-  if (!reduceMotion && S.E > 0.62 && Math.floor(S.beat) % 32 === 0 && bph < win) S.co2 = 1;
-  if (!reduceMotion && S.E > 0.8 && Math.floor(S.beat) % 16 === 0 && bph < win) S.pyro = Math.max(S.pyro, 0.7);
+  // Busy chat keeps the pyro going on the beat: CO2 every 8 bars, a flame chase
+  // every 4 bars when it's really going, sparks and the odd firework at the top.
+  const b = Math.floor(S.beat), onBeat = bph < win;
+  if (onBeat && S.E > 0.62 && b % 32 === 0) { S.co2 = 1; pyro('co2'); }
+  if (onBeat && S.E > 0.8 && b % 16 === 8) { S.pyro = Math.max(S.pyro, 0.7); pyro('chase'); }
+  if (onBeat && S.E > 0.9 && b % 32 === 16) pyro('sparks');
+  if (onBeat && S.E > 0.95 && b % 64 === 48) pyro('fireworks', 3);
 
   // Fake viewers pressing action buttons.
   if (!n) S.actDebt = 0;

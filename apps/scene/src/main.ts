@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { buildAtlas } from '@bibos/bibo-art';
 import { ACTIONS } from '@bibos/shared';
 import { params, serverBase } from './params';
-import { S, clock, crowd, crowdVersion, setCrowd, live, simTick, drop, toggleLights, spamEmote, everyone, type ShotName } from './sim';
+import { S, clock, crowd, crowdVersion, setCrowd, live, pyro, simTick, drop, toggleLights, spamEmote, everyone, type ShotName } from './sim';
 import { Crowd } from './crowd';
 import { World } from './world';
 import { Lights } from './lights';
@@ -102,6 +102,11 @@ addEventListener('keydown', (e) => {
   else if (k === '-' && !live) setCrowd(crowd.length - 100);
   else if (k === 'u') hudOn = !hudOn;
   else if (k === 'c') S.helpAt = S.t;
+  else if (k === 'f') pyro('chase');
+  else if (k === 'g') pyro('co2');
+  else if (k === 'k') pyro('sparks');
+  else if (k === 'r') pyro('fireworks', 6);
+  else if (k === 'p') pyro('all');
 });
 let drag: [number, number] | null = null;
 renderer.domElement.style.touchAction = 'none';
@@ -175,7 +180,7 @@ function frame(): void {
       ...(cs.devices.length ? [`devices: ${cs.devices.join(' | ').slice(0, 90)}`] : []),
       ...(cs.stats ? [`webrtc: ${cs.stats}`] : []),
       ...(bench.active ? [`BENCH running ${params.bench}s ...`] : []),
-      'keys 1-5 shots  0 auto  D drop  L lights  H hype  W wave  J all act  T tap  +/- 100  C commands  U hud',
+      'keys 1-5 shots  0 auto  D drop  L lights  H hype  W wave  J all act  T tap  +/- 100  C commands  F fire  G co2  K sparks  R fireworks  P all pyro  U hud',
     ] : [];
   }
   overlay.draw(camera, t, beat);

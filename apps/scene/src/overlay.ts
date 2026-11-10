@@ -1,11 +1,11 @@
 /**
  * 2D overlay canvas on top of WebGL: name labels, hype meter, stream tags,
- * "CHAT EARNED THIS" banner, fireworks, drop flash, HUD.
+ * "CHAT EARNED THIS" banner, drop flash, HUD.
  */
 import * as THREE from 'three';
 import { clamp, HEADS, HATS, EXTRAS, PATTERNS, BODY_COLORS, BODY_COLOR_NAMES, SHIRT_COLORS, SHIRT_COLOR_NAMES } from '@bibos/shared';
 import { HELP_SECONDS, joinedCount } from './viewers';
-import { crowd, S, fireworks, reduceMotion, clock, joins, live } from './sim';
+import { crowd, S, reduceMotion, clock, joins, live } from './sim';
 import { poseHop } from './crowd';
 import { params } from './params';
 
@@ -37,19 +37,6 @@ export class Overlay {
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, W, H);
     const k = H / 1080;
-
-    // Fireworks (screen space, like the prototype).
-    for (let i = fireworks.length - 1; i >= 0; i--) {
-      const f = fireworks[i], age = t - f.at;
-      if (age < 0) continue;
-      if (age > 1.5) { fireworks.splice(i, 1); continue; }
-      const r = (1 - Math.pow(1 - age / 1.5, 3)) * 230 * k, sz = 13 * k * (1 - age / 1.5) + 2;
-      g.fillStyle = f.c;
-      for (let j = 0; j < 26; j++) {
-        const q = (j / 26) * Math.PI * 2 + f.s;
-        g.fillRect(f.x * W + Math.cos(q) * r - sz / 2, f.y * H + Math.sin(q) * r + age * age * 45 * k - sz / 2, sz, sz);
-      }
-    }
 
     if (params.labels) this.labels(cam, t, beat, k);
     this.tags(k);

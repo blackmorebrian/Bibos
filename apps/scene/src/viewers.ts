@@ -8,7 +8,7 @@ import {
   mulberry, type ActionId, type BiboLook,
 } from '@bibos/shared';
 import {
-  S, crowd, emote, addFloat, liveChat, joins, makeBot, rnd, SEA, clock, drop, toggleLights, appendBibo, removeBibo,
+  S, crowd, emote, addFloat, liveChat, joins, makeBot, rnd, SEA, clock, drop, toggleLights, appendBibo, removeBibo, pyro,
   type Bibo, type ShotName,
 } from './sim';
 import { cutTo, SHOT_NAMES } from './camera';
@@ -177,6 +177,12 @@ function djCommand(args: string[]): void {
     case 'look': if (LOOK_NAMES.includes(arg)) S.look = arg; break;
     case 'kick': if (arg) removeViewer(arg.replace(/^@/, '')); break;
     case 'help': S.helpAt = S.t; break;
+    case 'fire': case 'flames': pyro(arg === 'chase' ? 'chase' : 'fire'); break;
+    case 'co2': case 'geyser': case 'smoke': pyro('co2'); break;
+    case 'sparks': pyro('sparks'); break;
+    case 'falls': case 'waterfall': pyro('falls'); break;
+    case 'fireworks': pyro('fireworks', Math.min(20, parseInt(arg, 10) || 6)); break;
+    case 'pyro': pyro('all'); break;
   }
 }
 

@@ -4,11 +4,16 @@ const q = new URLSearchParams((window as any).BIBOS_DEFAULTS ?? '');
 new URLSearchParams(location.search).forEach((v, k) => q.set(k, v));
 const num = (k: string, d: number) => (q.has(k) && q.get(k) !== '' ? Number(q.get(k)) : d);
 
+/** The channel the bare site address reads. Add ?channel=other to point it elsewhere. */
+const DEFAULT_CHANNEL = 'itsbrianblackmore';
+// Benchmarks run on made-up chat unless a channel is named.
+const channelParam = q.get('channel') ?? (q.has('bench') ? '' : DEFAULT_CHANNEL);
+
 export type CamRoute = 'clip' | 'direct' | 'relay' | 'off';
 
 export const params = {
   /** Number of made-up filler Bibos. Live (with ?channel=) the crowd starts empty and only real viewers appear. */
-  n: num('n', q.get('channel') ? 0 : 500),
+  n: num('n', channelParam ? 0 : 500),
   /** Benchmark length in seconds (0 = free run). */
   bench: num('bench', 0),
   hud: q.get('hud') === '1' || q.has('bench'),
@@ -29,7 +34,7 @@ export const params = {
   shot: q.get('shot'),
   labels: q.get('labels') !== '0',
   /** Twitch channel to read chat from (anonymous, read-only). Empty = fake chat. */
-  channel: (q.get('channel') ?? '').replace(/^#/, '').trim().toLowerCase(),
+  channel: channelParam.replace(/^#/, '').trim().toLowerCase(),
   /** Minutes between automatic "how to join" cards (0 = only on !bibohelp or the C key). */
   help: num('help', 10),
   /** Seconds a chat message takes to reach the scene; "!dj beat" subtracts it so the downbeat lands right. */

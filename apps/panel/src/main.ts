@@ -4,6 +4,8 @@
  * checks the password before passing any command on.
  */
 
+import { IMAGES } from '../../scene/src/screens';
+
 const HUB = new URLSearchParams(location.search).get('hub') ?? 'wss://bibos-hub.bibos-hub.workers.dev';
 const DEFAULT_ROOM = 'itsbrianblackmore';
 const STORE = 'bibos.panel';
@@ -16,6 +18,7 @@ const loginMsg = $('loginMsg'), dot = $('dot'), statusText = $('statusText');
 interface SceneState {
   look: string; colors: [string, string] | null; intensity: number; speed: number; lasers: string;
   strobe: boolean; blackout: boolean; lights: boolean; bpm: number; shot: string; auto: boolean; viewers: number;
+  zoom?: number; pan?: number; height?: number; pace?: string; screens?: string; screenText?: string;
 }
 let state: SceneState | null = null;
 let ws: WebSocket | null = null;
@@ -159,6 +162,29 @@ function slider(id: string, out: string, what: string, fmt: (v: number) => strin
 }
 slider('intensity', 'intOut', 'intensity', (v) => `${Math.round(v * 100)}%`);
 slider('speed', 'spdOut', 'speed', (v) => `${v.toFixed(1)}×`);
+slider('zoom', 'zoomOut', 'zoom', (v) => `${v.toFixed(1)}×`);
+slider('pan', 'panOut', 'pan', (v) => String(v));
+slider('height', 'heightOut', 'height', (v) => String(v));
+
+$('focusForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = $<HTMLInputElement>('focusName').value.trim().replace(/^@/, '');
+  if (name) send('focus', name.toLowerCase());
+});
+$('textForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const text = $<HTMLInputElement>('screenText').value.trim();
+  if (text) send('screens', `text ${text}`);
+});
+
+// Little previews of the pixel pictures on their buttons.
+document.querySelectorAll<HTMLElement>('.pix').forEach((el) => {
+  for (const row of IMAGES[el.dataset.img!] ?? []) for (const ch of row) {
+    const i = document.createElement('i');
+    if (ch !== '.') i.className = ch === '#' ? 'a' : 'b';
+    el.appendChild(i);
+  }
+});
 
 // Tap tempo: average the last taps, then lock the downbeat to the last tap.
 let taps: number[] = [];
@@ -183,6 +209,8 @@ function render(): void {
   mark('look', s.look);
   mark('lasers', s.lasers);
   mark('shot', s.auto ? 'auto' : s.shot);
+  mark('pace', s.pace ?? 'normal');
+  mark('screens', s.screens ?? 'auto');
   const cur = s.colors ? s.colors.join(',').toLowerCase() : 'auto';
   sw.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.classList.toggle('on', b.dataset.colors === cur));
   document.querySelectorAll<HTMLButtonElement>('button[data-state]').forEach((b) => {
@@ -196,5 +224,8 @@ function render(): void {
   };
   setIf('intensity', 'intOut', s.intensity, (v) => `${Math.round(v * 100)}%`);
   setIf('speed', 'spdOut', s.speed, (v) => `${v.toFixed(1)}×`);
+  setIf('zoom', 'zoomOut', s.zoom ?? 1, (v) => `${v.toFixed(1)}×`);
+  setIf('pan', 'panOut', s.pan ?? 0, (v) => String(v));
+  setIf('height', 'heightOut', s.height ?? 0, (v) => String(v));
   $('bpm').textContent = String(Math.round(s.bpm));
 }

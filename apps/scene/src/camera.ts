@@ -38,7 +38,8 @@ export function autoCut(bar: number): void {
   let n = pick(pool), g = 0;
   while ((n === S.shot || (n === 'close' && !crowd.length)) && g++ < 8) n = pick(pool);
   cutTo(n);
-  S.nextCut = bar + (n === 'close' ? 2 : pick([2, 3, 4])) * (S.lights ? 2 : 1);
+  const pace = S.cam.pace === 'fast' ? 0.5 : S.cam.pace === 'slow' ? 2 : 1;
+  S.nextCut = bar + Math.max(1, Math.round((n === 'close' ? 2 : pick([2, 3, 4])) * (S.lights ? 2 : 1) * pace));
 }
 
 export function updateCamera(cam: THREE.PerspectiveCamera, t: number, bar: number): void {
@@ -47,8 +48,10 @@ export function updateCamera(cam: THREE.PerspectiveCamera, t: number, bar: numbe
   const sh = SHOTS[S.shot](st);
   const push = 1 + Math.min(t - S.cutAt, 12) * (reduceMotion ? 0 : 0.012);
   const dir = sh.p[2] < sh.l[2] ? 1 : -1;
-  sh.p[0] += S.mx * dir; sh.l[0] += S.mx * dir;
-  sh.p[1] = Math.max(0.8, sh.p[1] + S.my); sh.l[1] += S.my;
+  // Mouse drag (S.mx/my, reset on each cut) plus the operator's framing (kept across cuts).
+  const mx = S.mx + S.cam.panX, my = S.my + S.cam.panY;
+  sh.p[0] += mx * dir; sh.l[0] += mx * dir;
+  sh.p[1] = Math.max(0.8, sh.p[1] + my); sh.l[1] += my;
   if (S.shake > 0.01 && !reduceMotion) { sh.l[0] += (rnd() - 0.5) * S.shake * 0.9; sh.l[1] += (rnd() - 0.5) * S.shake * 0.9; }
   const fm = sh.f * S.zoom * push;
   cam.fov = (2 * Math.atan(1 / (2.2 * fm)) * 180) / Math.PI;

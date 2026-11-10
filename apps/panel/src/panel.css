@@ -46,10 +46,22 @@ header h1 { flex: 1; }
 .g4 { grid-template-columns: repeat(4, 1fr); }
 .g5 { grid-template-columns: repeat(5, 1fr); }
 .g6 { grid-template-columns: repeat(6, 1fr); }
+.g2 { grid-template-columns: repeat(2, 1fr); }
+.span3 { grid-column: span 3; }
+.label { align-self: center; color: var(--dim); font-size: 14px; text-align: right; }
+.hint { margin: 0; color: var(--dim); font-size: 13px; }
+.pics button { display: grid; justify-items: center; gap: 6px; padding: 10px 6px; }
+.pix { display: grid; grid-template-columns: repeat(9, 4px); grid-auto-rows: 4px; gap: 1px; }
+.pix i { border-radius: 1px; background: rgba(255, 255, 255, 0.08); }
+.pix i.a { background: var(--pink); }
+.pix i.b { background: var(--teal); }
+.custom input:not([type]) { flex: 2; min-width: 0; }
 @media (max-width: 640px) {
   .g6 { grid-template-columns: repeat(3, 1fr); }
   .g5 { grid-template-columns: repeat(4, 1fr); }
   .g4 { grid-template-columns: repeat(2, 1fr); }
+  .g5 > .label { display: none; }
+  .g5 > .span3 { grid-column: span 3; }
 }
 
 button {

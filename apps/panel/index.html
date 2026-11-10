@@ -100,9 +100,61 @@
         <button data-cmd="cam" data-arg="wide">Wide</button>
         <button data-cmd="cam" data-arg="sweep">Sweep</button>
         <button data-cmd="cam" data-arg="over">Over</button>
-        <button data-cmd="cam" data-arg="close">Close</button>
+        <button data-cmd="cam" data-arg="close">Close-up</button>
         <button data-cmd="cam" data-arg="back">Stage</button>
       </div>
+      <div class="grid g5">
+        <button data-cmd="cut" class="hot">Next shot</button>
+        <span class="label">Auto cuts:</span>
+        <div class="grid g3 span3" data-group="pace">
+          <button data-cmd="pace" data-arg="slow">Slow</button>
+          <button data-cmd="pace" data-arg="normal">Normal</button>
+          <button data-cmd="pace" data-arg="fast">Fast</button>
+        </div>
+      </div>
+      <label class="slider">Zoom <output id="zoomOut">1.0×</output>
+        <input id="zoom" type="range" min="0.7" max="2.4" step="0.05" value="1"></label>
+      <label class="slider">Pan left / right <output id="panOut">0</output>
+        <input id="pan" type="range" min="-13" max="13" step="0.5" value="0"></label>
+      <label class="slider">Height <output id="heightOut">0</output>
+        <input id="height" type="range" min="-3" max="5" step="0.25" value="0"></label>
+      <div class="grid g2">
+        <button data-cmd="frame">Reset framing</button>
+        <button data-cmd="shake">Camera shake</button>
+      </div>
+      <form id="focusForm" class="row custom">
+        <input id="focusName" placeholder="Viewer name" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Viewer to close up on">
+        <button type="submit">Close-up on viewer</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Side screens</h2>
+      <div class="grid g4" data-group="screens">
+        <button data-cmd="screens" data-arg="auto">Auto</button>
+        <button data-cmd="screens" data-arg="meter">Meter</button>
+        <button data-cmd="screens" data-arg="stripes">Stripes</button>
+        <button data-cmd="screens" data-arg="checker">Checker</button>
+        <button data-cmd="screens" data-arg="ripple">Ripple</button>
+        <button data-cmd="screens" data-arg="solid">Solid</button>
+        <button data-cmd="screens" data-arg="off">Off</button>
+        <button data-cmd="screens" data-arg="text" id="textMode" disabled>Text</button>
+      </div>
+      <div class="grid g4 pics" data-group="screens">
+        <button data-cmd="screens" data-arg="heart"><span class="pix" data-img="heart"></span>Heart</button>
+        <button data-cmd="screens" data-arg="star"><span class="pix" data-img="star"></span>Star</button>
+        <button data-cmd="screens" data-arg="smile"><span class="pix" data-img="smile"></span>Smile</button>
+        <button data-cmd="screens" data-arg="note"><span class="pix" data-img="note"></span>Music</button>
+        <button data-cmd="screens" data-arg="bolt"><span class="pix" data-img="bolt"></span>Bolt</button>
+        <button data-cmd="screens" data-arg="fire"><span class="pix" data-img="fire"></span>Fire</button>
+        <button data-cmd="screens" data-arg="arrow"><span class="pix" data-img="arrow"></span>Arrow</button>
+        <button data-cmd="screens" data-arg="diamond"><span class="pix" data-img="diamond"></span>Diamond</button>
+      </div>
+      <form id="textForm" class="row custom">
+        <input id="screenText" maxlength="40" placeholder="Scrolling text, e.g. DROP INCOMING" autocomplete="off" aria-label="Scrolling text">
+        <button type="submit">Scroll it</button>
+      </form>
+      <p class="hint">Letters, numbers and ! ? - . : ' + work. Type &lt; for a heart.</p>
     </section>
 
     <section class="panel">

@@ -11,7 +11,8 @@ import {
   S, crowd, emote, addFloat, liveChat, joins, makeBot, rnd, SEA, clock, drop, toggleLights, appendBibo, removeBibo, pyro,
   type Bibo, type ShotName,
 } from './sim';
-import { cutTo, SHOT_NAMES } from './camera';
+import { autoCut, cutTo, SHOT_NAMES } from './camera';
+import { SCREEN_MODES } from './screens';
 import { params } from './params';
 import type { ChatMessage } from './twitch';
 
@@ -150,8 +151,8 @@ let helpAsked = -99;
 /* ---------- DJ controls: "!dj <command>" from you or your mods (Stream Deck "Chat Message" keys) ---------- */
 const LOOK_NAMES = ['auto', 'fan', 'cross', 'chase', 'wave', 'pulse'];
 function djCommand(args: string[]): void {
-  const [what = '', arg = ''] = args.map((a) => a.toLowerCase());
-  applyCommand(what, arg, params.beatlag);
+  const [what = '', ...rest] = args.map((a) => a.toLowerCase());
+  applyCommand(what, rest.join(' '), params.beatlag);
 }
 
 const HEX = /^#?[0-9a-f]{6}$/i;
@@ -199,6 +200,24 @@ export function applyCommand(what: string, arg: string, lag = 0): void {
       if (arg === 'auto') { S.auto = true; S.nextCut = Math.floor(S.beat / 4) + 1; }
       else if ((SHOT_NAMES as string[]).includes(arg)) { S.auto = false; cutTo(arg as ShotName); }
       break;
+    case 'cut': autoCut(Math.floor(S.beat / 4)); break; // next shot now (stays on auto if it was)
+    case 'pace': if (['slow', 'normal', 'fast'].includes(arg)) S.cam.pace = arg as 'slow' | 'normal' | 'fast'; break;
+    case 'zoom': { const v = parseFloat(arg); if (v >= 0.7 && v <= 2.4) S.zoom = v; break; }
+    case 'pan': { const v = parseFloat(arg); if (Math.abs(v) <= 13) S.cam.panX = v; break; }
+    case 'height': { const v = parseFloat(arg); if (v >= -3 && v <= 5) S.cam.panY = v; break; }
+    case 'frame': S.zoom = 1; S.cam.panX = 0; S.cam.panY = 0; S.mx = 0; S.my = 0; break;
+    case 'shake': S.shake = 1; break;
+    case 'focus': { // close-up on one viewer's Bibo
+      const b = byLogin.get(arg.replace(/^@/, '').toLowerCase());
+      if (b) { S.auto = false; cutTo('close', b); }
+      break;
+    }
+    case 'screens': {
+      const [mode, ...rest] = arg.split(' ');
+      if (mode === 'text') { const t = rest.join(' ').trim(); if (t) S.screens = { mode, text: t.slice(0, 40) }; }
+      else if (SCREEN_MODES.includes(mode)) S.screens = { mode, text: S.screens.text };
+      break;
+    }
     case 'look': if (LOOK_NAMES.includes(arg)) S.look = arg; break;
     case 'kick': if (arg) removeViewer(arg.replace(/^@/, '')); break;
     case 'help': S.helpAt = S.t; break;

@@ -1,6 +1,8 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "stress", "runtimeExecutable": "node", "runtimeArgs": ["tools/stress-server.mjs", "8787"], "port": 8787 }
+    { "name": "stress", "runtimeExecutable": "node", "runtimeArgs": ["tools/stress-server.mjs", "8787"], "port": 8787 },
+    { "name": "hub", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "@bibos/hub"], "port": 8788 },
+    { "name": "panel", "runtimeExecutable": "npx", "runtimeArgs": ["vite", "apps/panel", "--port", "5175"], "port": 5175 }
   ]
 }

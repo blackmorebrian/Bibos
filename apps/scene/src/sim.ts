@@ -66,6 +66,10 @@ export const S = {
     strobe: false,
     blackout: false,
   },
+  /** Camera operator: framing on top of every shot, and how often the auto-director cuts. */
+  cam: { panX: 0, panY: 0, pace: 'normal' as 'slow' | 'normal' | 'fast' },
+  /** Pixel screens either side of the main screen: auto/pattern/image name, or 'text'. */
+  screens: { mode: 'auto', text: '' },
   /** When the "how to join" commands card last appeared (first auto-show ~30 s after load). */
   helpAt: -(Math.max(1, params.help) * 60) + 30,
   midZ: 8,

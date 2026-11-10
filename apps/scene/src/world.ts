@@ -8,8 +8,10 @@ import { mulberry } from '@bibos/shared';
 import { S } from './sim';
 import { canvasTexture } from './sprites';
 import { params } from './params';
+import { IMAGES, textColumns } from './screens';
 
 export const PALS = [['#ff3d81', '#19d3c5'], ['#ffc21a', '#7c5cff'], ['#19d3c5', '#ff7a2f'], ['#ff4fd8', '#ffe066']];
+const WHITE = new THREE.Color('#ffffff');
 const CF = ['#ff3d81', '#ffc21a', '#19d3c5', '#ffffff', '#7c5cff', '#ff7a2f'];
 const PAPER = '#fffdf6';
 const CROWD_H = 1.8, TILE = 30;
@@ -336,15 +338,35 @@ export class World {
 
     const col = this.tmpColor;
     let idx = 0;
+    const scr = S.screens.mode;
+    const img = IMAGES[scr];
+    const cols = scr === 'text' ? textColumns(S.screens.text) : null;
+    const scroll = cols ? Math.floor(t * 7) % cols.length : 0;
+    const two = S.ld.colors ?? pal;
+    // Fixed pattern picks one of the show's four section styles; 'auto' follows the music.
+    const pat = { meter: 0, stripes: 1, checker: 2, ripple: 3 }[scr as 'meter'] ?? sect;
     for (let s = 0; s < 2; s++) for (let c = 0; c < 9; c++) {
+      const x = s === 0 ? 8 - c : c; // column counted from the screen's left edge
       const lvl = 0.2 + 0.8 * Math.abs(Math.sin(beat * Math.PI * 0.5 + c * 1.3)) * (0.4 + S.E * 0.7);
       for (let r = 0; r < 8; r++) {
-        let on: boolean;
-        if (sect === 0) on = r / 8 < lvl;
-        else if (sect === 1) on = (((c + r + Math.floor(beat * 2)) % 6) + 6) % 6 < 3;
-        else if (sect === 2) on = (c + r + Math.floor(beat)) % 2 === 0;
-        else on = Math.abs(Math.sin(Math.hypot(c - 4, r - 3.5) * 0.9 - beat * Math.PI * 0.5)) > 0.5;
-        col.set(on ? (sect === 0 ? CF[c % CF.length] : pal[(c + r) % 2]) : '#21137e');
+        const y = 7 - r; // row counted from the top
+        let on: string | null;
+        if (scr === 'off') on = null;
+        else if (scr === 'solid') on = two[0];
+        else if (img) { const ch = img[y][x]; on = ch === '#' ? two[0] : ch === '+' ? two[1] : null; }
+        else if (cols) on = y < 7 && (cols[(scroll + x) % cols.length] >> y) & 1 ? two[0] : null;
+        else {
+          let lit: boolean;
+          if (pat === 0) lit = r / 8 < lvl;
+          else if (pat === 1) lit = (((c + r + Math.floor(beat * 2)) % 6) + 6) % 6 < 3;
+          else if (pat === 2) lit = (c + r + Math.floor(beat)) % 2 === 0;
+          else lit = Math.abs(Math.sin(Math.hypot(c - 4, r - 3.5) * 0.9 - beat * Math.PI * 0.5)) > 0.5;
+          on = lit ? (pat === 0 && !S.ld.colors ? CF[c % CF.length] : two[(c + r) % 2]) : null;
+        }
+        if (on) {
+          col.set(on);
+          if (img || scr === 'solid') col.lerp(WHITE, kick * 0.35); // pictures pulse on the kick
+        } else col.set('#21137e');
         this.panelCells.setColorAt(idx++, col);
       }
     }

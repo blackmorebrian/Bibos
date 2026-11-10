@@ -1,0 +1,13 @@
+{
+  "name": "@bibos/hub",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8788",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261110.1",
+    "wrangler": "^4.159.0"
+  }
+}

@@ -6,7 +6,7 @@
  */
 import * as THREE from 'three';
 import { clamp } from '@bibos/shared';
-import { S } from './sim';
+import { S, reduceMotion } from './sim';
 import { PALS } from './world';
 import { SpriteBatch, glowTexture, rgb } from './sprites';
 
@@ -86,16 +86,25 @@ export class Lights {
   readonly group = new THREE.Group();
   private beams = new Beams();
   readonly glows: SpriteBatch;
+  /** Movement clock, sped up or slowed by the designer's speed control. */
+  private lt = 0;
+  private lastT = 0;
   constructor() {
     this.glows = new SpriteBatch(glowTexture(), 160, 'add', 21);
     this.group.add(this.beams.mesh, this.glows.mesh);
   }
 
-  update(t: number, beat: number, back: boolean): void {
+  update(tReal: number, beat: number, back: boolean): void {
+    const L = S.ld;
+    this.lt += Math.max(0, Math.min(0.1, tReal - this.lastT)) * L.speed;
+    this.lastT = tReal;
+    const t = this.lt;
     const ph = ((beat % 1) + 1) % 1, kick = Math.pow(1 - ph, 2.4), bar = Math.floor(beat / 4);
-    const pal = PALS[((Math.floor(bar / 8) % 4) + 4) % 4].map(rgb);
+    const pal = (L.colors ?? PALS[((Math.floor(bar / 8) % 4) + 4) % 4]).map(rgb);
     const look = S.look === 'auto' ? LOOKS[((Math.floor(bar / 4) % 5) + 5) % 5] : S.look;
-    const power = clamp(0.35 + S.E * 0.75, 0, 1.25) * (1 - S.dim * 0.85);
+    // Strobe: beams only, once per beat (kept slow on purpose; never full-screen).
+    const strobe = L.strobe && !reduceMotion ? (ph < 0.16 ? 1.25 : 0.06) : 1;
+    const power = L.blackout ? 0 : clamp(0.35 + S.E * 0.75, 0, 1.25) * (1 - S.dim * 0.85) * L.intensity * strobe;
     const rig = 0.45 + 0.55 * S.mShow;
     const N = back ? 18 : 14;
     const B = this.beams, G = this.glows;
@@ -126,9 +135,10 @@ export class Lights {
       G.add(o[0], o[1], o[2], 2.4, 2.4, c[0], c[1], c[2], Math.min(1, amp * power * (0.6 + 0.4 * kick)));
     }
     // Laser fans on big moments (not in lights-down, skipped on every 4th bar unless very hype).
-    if (S.E > 0.42 && S.dim < 0.5 && (bar % 4 !== 3 || S.E > 0.78)) {
+    const autoLasers = S.E > 0.42 && S.dim < 0.5 && (bar % 4 !== 3 || S.E > 0.78);
+    if (!L.blackout && (L.lasers === 'on' || (L.lasers === 'auto' && autoLasers))) {
       const em = back ? [[0, 33, -15], [-22, 33, -15], [22, 33, -15]] : [[-24, 17, 46], [24, 17, 46], [0, 24, 0]];
-      const la = clamp(S.E + 0.2, 0, 1);
+      const la = clamp(S.E + 0.2, 0.5, 1) * Math.min(1.3, L.intensity) * strobe;
       em.forEach((e, ei) => {
         const sw = Math.sin(t * 0.7 + ei * 2), c = pal[ei % 2];
         for (let j = 0; j < 9; j++) {

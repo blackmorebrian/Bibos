@@ -1,0 +1,13 @@
+# Bibos control hub: relays the light designer's control panel to the crowd scene.
+# Password lives in a secret: `npx wrangler secret put PANEL_PASSWORD`.
+name = "bibos-hub"
+main = "src/index.ts"
+compatibility_date = "2025-06-01"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]

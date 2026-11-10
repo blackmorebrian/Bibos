@@ -57,6 +57,15 @@ export const S = {
   active: 0,
   /** Recently used Twitch emote keys ("tw:<id>"), newest last. */
   recentEmotes: [] as string[],
+  /** Light designer overrides (control panel or !dj): null colors = follow the show's palette. */
+  ld: {
+    colors: null as null | [string, string],
+    intensity: 1,
+    speed: 1,
+    lasers: 'auto' as 'auto' | 'on' | 'off',
+    strobe: false,
+    blackout: false,
+  },
   /** When the "how to join" commands card last appeared (first auto-show ~30 s after load). */
   helpAt: -(Math.max(1, params.help) * 60) + 30,
   midZ: 8,

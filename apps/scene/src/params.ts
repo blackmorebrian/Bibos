@@ -41,6 +41,8 @@ export const params = {
   beatlag: num('beatlag', 0.3),
   /** Painted far-away festival crowd behind the real Bibos (scenery, not counted). 0 = open field. */
   backdrop: q.get('backdrop') !== '0',
+  /** Control hub for the light designer's panel (empty = off). */
+  hub: q.get('hub') ?? 'wss://bibos-hub.bibos-hub.workers.dev',
   /** Free-text tag stored with bench results (e.g. "streaming-nvenc"). */
   tag: q.get('tag') ?? '',
 };

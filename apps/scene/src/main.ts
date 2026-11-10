@@ -18,6 +18,7 @@ import { updateCamera, cutTo, SHOT_NAMES } from './camera';
 import { SpriteBatch } from './sprites';
 import { TwitchChat, parseEmotes } from './twitch';
 import { handleChat, removeViewer, restoreViewers, joinedCount } from './viewers';
+import { connectHub } from './control';
 
 // Flat paper colors: treat every color value as final sRGB, like Canvas 2D.
 THREE.ColorManagement.enabled = false;
@@ -73,6 +74,7 @@ scene.add(world.group, crowdR.mesh, crowdR.glowMesh, lights.group, fx.group);
 // Real Twitch chat (read-only, anonymous). Without ?channel= the fake chat runs.
 const twitch = params.channel ? new TwitchChat(params.channel, handleChat, removeViewer) : null;
 if (twitch) restoreViewers();
+const hub = connectHub();
 
 const stats = new Stats(renderer);
 const bench = new Bench();
@@ -176,6 +178,7 @@ function frame(): void {
       `gpu: ${stats.renderer.slice(0, 80)}`,
       `atlas ${atlas.width}x${atlas.height} cell ${atlas.cellPx}px  built ${atlas.buildMs.toFixed(0)} ms  aa ${params.aa}  scale ${params.scale}`,
       `cam ${cs.route}: ${cs.state}  ${cs.detail}`,
+      `light desk hub: ${hub.state}`,
       ...(twitch ? [`twitch #${twitch.status.channel}: ${twitch.status.state}  msgs ${twitch.status.msgs}  joined ${joinedCount()}  chatters/min ${S.active}  base ${S.base.toFixed(1)}`] : []),
       ...(cs.devices.length ? [`devices: ${cs.devices.join(' | ').slice(0, 90)}`] : []),
       ...(cs.stats ? [`webrtc: ${cs.stats}`] : []),

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#120a3d">
+  <title>Bibos Light Desk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Figtree:wght@600;800&display=swap">
+  <link rel="stylesheet" href="./src/panel.css">
+</head>
+<body>
+  <main id="login" class="login">
+    <h1>BIBOS <span>LIGHT DESK</span></h1>
+    <form id="loginForm">
+      <label>Channel <input id="room" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      <label>Password <input id="password" type="password" autocomplete="current-password"></label>
+      <label class="check"><input id="remember" type="checkbox" checked> Remember on this device</label>
+      <button type="submit" class="big go">Unlock</button>
+      <p id="loginMsg" class="msg" role="status"></p>
+    </form>
+  </main>
+
+  <main id="desk" class="desk" hidden>
+    <header>
+      <h1>BIBOS <span>LIGHT DESK</span></h1>
+      <div class="status"><span id="dot" class="dot"></span><span id="statusText">Connecting…</span></div>
+      <button id="logout" class="ghost">Lock</button>
+    </header>
+
+    <section class="panel">
+      <h2>Show</h2>
+      <div class="grid g3">
+        <button class="big hot" data-cmd="drop">💥 Drop</button>
+        <button class="big" data-cmd="hype">🔥 Hype finale</button>
+        <button class="big toggle" data-cmd="lights" data-state="lights">🌙 Lights down</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Looks</h2>
+      <div class="grid g6" data-group="look">
+        <button data-cmd="look" data-arg="auto">Auto</button>
+        <button data-cmd="look" data-arg="fan">Fan</button>
+        <button data-cmd="look" data-arg="cross">Cross</button>
+        <button data-cmd="look" data-arg="chase">Chase</button>
+        <button data-cmd="look" data-arg="wave">Wave</button>
+        <button data-cmd="look" data-arg="pulse">Pulse</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Colors</h2>
+      <div id="swatches" class="grid g5"></div>
+      <div class="row custom">
+        <span>Custom</span>
+        <input id="colA" type="color" value="#ff3d81" aria-label="First color">
+        <input id="colB" type="color" value="#19d3c5" aria-label="Second color">
+        <button id="sendColors">Use</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Rig</h2>
+      <label class="slider">Intensity <output id="intOut">100%</output>
+        <input id="intensity" type="range" min="0" max="2" step="0.05" value="1"></label>
+      <label class="slider">Movement speed <output id="spdOut">1.0×</output>
+        <input id="speed" type="range" min="0.1" max="4" step="0.05" value="1"></label>
+      <div class="grid g3" data-group="lasers">
+        <button data-cmd="lasers" data-arg="auto">Lasers auto</button>
+        <button data-cmd="lasers" data-arg="on">Lasers on</button>
+        <button data-cmd="lasers" data-arg="off">Lasers off</button>
+      </div>
+      <div class="grid g3">
+        <button class="toggle" data-cmd="strobe" data-state="strobe">Beat strobe</button>
+        <button class="toggle" data-cmd="blackout" data-state="blackout">Blackout</button>
+        <button data-cmd="reset">Reset rig</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Pyro</h2>
+      <div class="grid g3">
+        <button class="fire" data-cmd="fire">Flames</button>
+        <button class="fire" data-cmd="fire" data-arg="chase">Flame chase</button>
+        <button class="ice" data-cmd="co2">CO2</button>
+        <button class="gold" data-cmd="sparks">Sparks</button>
+        <button class="gold" data-cmd="falls">Waterfall</button>
+        <button class="sky" data-cmd="fireworks" data-arg="8">Fireworks</button>
+      </div>
+      <button class="big hot wide" data-cmd="pyro">Everything</button>
+    </section>
+
+    <section class="panel">
+      <h2>Camera</h2>
+      <div class="grid g6" data-group="shot">
+        <button data-cmd="cam" data-arg="auto">Auto</button>
+        <button data-cmd="cam" data-arg="wide">Wide</button>
+        <button data-cmd="cam" data-arg="sweep">Sweep</button>
+        <button data-cmd="cam" data-arg="over">Over</button>
+        <button data-cmd="cam" data-arg="close">Close</button>
+        <button data-cmd="cam" data-arg="back">Stage</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Tempo</h2>
+      <div class="tempo">
+        <div class="bpm"><output id="bpm">128</output><small>BPM</small></div>
+        <button id="tap" class="big">Tap</button>
+        <button data-cmd="beat" class="big">Sync on 1</button>
+      </div>
+      <div class="grid g4">
+        <button data-cmd="nudge" data-arg="-50">◀ 50ms</button>
+        <button data-cmd="nudge" data-arg="-10">◀ 10ms</button>
+        <button data-cmd="nudge" data-arg="10">10ms ▶</button>
+        <button data-cmd="nudge" data-arg="50">50ms ▶</button>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>

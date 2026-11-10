@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm install",
-  "buildCommand": "npm run build -w @bibos/scene",
+  "buildCommand": "npm run build -w @bibos/scene && npm run build -w @bibos/panel",
   "outputDirectory": "apps/scene/dist"
 }

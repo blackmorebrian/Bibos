@@ -8,10 +8,12 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @bibos/scene",
-    "build": "npm run build -w @bibos/scene && npm run build -w @bibos/webcam-sender",
-    "typecheck": "tsc -p apps/scene && tsc -p apps/webcam-sender",
+    "build": "npm run build -w @bibos/scene && npm run build -w @bibos/panel && npm run build -w @bibos/webcam-sender",
+    "typecheck": "tsc -p apps/scene && tsc -p apps/panel && tsc -p apps/hub && tsc -p apps/webcam-sender",
     "stress": "npm run build && node tools/stress-server.mjs",
-    "stress:serve": "node tools/stress-server.mjs"
+    "stress:serve": "node tools/stress-server.mjs",
+    "hub:dev": "npm run dev -w @bibos/hub",
+    "hub:deploy": "npm run deploy -w @bibos/hub"
   },
   "dependencies": {
     "@types/three": "^0.187.0",

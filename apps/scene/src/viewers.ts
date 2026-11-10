@@ -151,8 +151,33 @@ let helpAsked = -99;
 const LOOK_NAMES = ['auto', 'fan', 'cross', 'chase', 'wave', 'pulse'];
 function djCommand(args: string[]): void {
   const [what = '', arg = ''] = args.map((a) => a.toLowerCase());
+  applyCommand(what, arg, params.beatlag);
+}
+
+const HEX = /^#?[0-9a-f]{6}$/i;
+const onOff = (arg: string, cur: boolean) => (['on', '1', 'true'].includes(arg) ? true : ['off', '0', 'false'].includes(arg) ? false : !cur);
+
+/**
+ * One command set for everything that runs the show: Stream Deck/chat ("!dj ...")
+ * and the light designer's control panel. `lag` is how late the message probably
+ * arrived, so a beat sync lands on the beat that was pressed.
+ */
+export function applyCommand(what: string, arg: string, lag = 0): void {
   const now = performance.now() / 1000;
+  const L = S.ld;
   switch (what) {
+    case 'colors': {
+      if (arg === 'auto' || !arg) { L.colors = null; break; }
+      const [a, b = a] = arg.split(/[,\s]+/);
+      if (HEX.test(a) && HEX.test(b)) L.colors = [a.startsWith('#') ? a : '#' + a, b.startsWith('#') ? b : '#' + b];
+      break;
+    }
+    case 'intensity': { const v = parseFloat(arg); if (v >= 0 && v <= 2) L.intensity = v; break; }
+    case 'speed': { const v = parseFloat(arg); if (v >= 0.1 && v <= 4) L.speed = v; break; }
+    case 'lasers': if (['auto', 'on', 'off'].includes(arg)) L.lasers = arg as 'auto' | 'on' | 'off'; break;
+    case 'strobe': L.strobe = onOff(arg, L.strobe); break;
+    case 'blackout': L.blackout = onOff(arg, L.blackout); break;
+    case 'reset': Object.assign(L, { colors: null, intensity: 1, speed: 1, lasers: 'auto', strobe: false, blackout: false }); S.look = 'auto'; break;
     case 'drop': drop(); break;
     case 'lights':
       if (['down', 'off', 'dark'].includes(arg)) { if (!S.lights) toggleLights(); }
@@ -168,7 +193,7 @@ function djCommand(args: string[]): void {
       break;
     }
     // Press on a downbeat. Chat takes a moment to arrive, so assume it was sent a little earlier.
-    case 'beat': case 'sync': clock.t0 = now - params.beatlag; break;
+    case 'beat': case 'sync': clock.t0 = now - lag; break;
     case 'nudge': { const ms = parseFloat(arg); if (Math.abs(ms) <= 500) clock.nudge(ms / 1000); break; }
     case 'cam': case 'camera':
       if (arg === 'auto') { S.auto = true; S.nextCut = Math.floor(S.beat / 4) + 1; }

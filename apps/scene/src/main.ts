@@ -17,8 +17,9 @@ import { Overlay } from './overlay';
 import { Stats, Bench, pct } from './stats';
 import { updateCamera, cutTo, SHOT_NAMES } from './camera';
 import { SpriteBatch } from './sprites';
-import { TwitchChat, parseEmotes } from './twitch';
-import { handleChat, removeViewer, restoreViewers, joinedCount, handleSub } from './viewers';
+import { TwitchChat, parseEmotes, parseEmoteRanges, type ChatMessage } from './twitch';
+import { handleChat, removeViewer, restoreViewers, joinedCount, handleSub, isBot } from './viewers';
+import { ChatWall } from './chatwall';
 import { connectHub } from './control';
 
 // Flat paper colors: treat every color value as final sRGB, like Canvas 2D.
@@ -66,14 +67,25 @@ document.body.appendChild(overlay.canvas);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.3, 1500);
 const webcam = new Webcam();
-const world = new World(webcam.texture);
+const chatWall = new ChatWall();
+const world = new World(webcam.texture, chatWall.texture);
 const crowdR = new Crowd(atlas);
 const lights = new Lights();
 const fx = new Fx(atlas, crowdR.baseTex);
 scene.add(world.group, crowdR.mesh, crowdR.glowMesh, lights.group, fx.group);
 
 // Real Twitch chat (read-only, anonymous). Without ?channel= the fake chat runs.
-const twitch = params.channel ? new TwitchChat(params.channel, handleChat, removeViewer, handleSub) : null;
+/** Every chat message drives the crowd, and (bots aside) goes on the side-screen chat wall. */
+function onChat(m: ChatMessage): void {
+  handleChat(m);
+  if (!isBot(m.login)) chatWall.add(m);
+}
+const twitch = params.channel
+  ? new TwitchChat(params.channel, onChat, (login) => { removeViewer(login); chatWall.removeUser(login); }, handleSub, {
+    deleted: (id) => chatWall.removeId(id),
+    cleared: () => chatWall.clear(),
+  })
+  : null;
 if (twitch) restoreViewers();
 const hub = connectHub();
 
@@ -155,6 +167,7 @@ function frame(): void {
   const back = fwd.z > 0; // camera looks down -fwd, so back view = looking toward -z
   crowdR.update(camera, t, beat);
   const W = renderer.domElement.width, H = renderer.domElement.height;
+  if (S.screens.mode === 'chat') chatWall.update();
   world.update(camera, t, beat, W, H);
   lights.update(t, beat, back);
   fx.update(t, dt, back);
@@ -202,7 +215,7 @@ requestAnimationFrame(frame);
   S, crowd, crowdR, renderer, scene, camera, atlas, stats,
   /** Test hook: pretend someone typed in chat, e.g. __bibos.say('kevin', '!bibo') or say('kevin', 'Kappa', '25:0-4'). */
   say: (login: string, text: string, emotes = '', broadcaster = false, sub = false) =>
-    handleChat({ login: login.toLowerCase(), display: login, color: '', text, emotes: parseEmotes(emotes), mod: false, broadcaster, sub }),
+    onChat({ login: login.toLowerCase(), display: login, color: '', text, emotes: parseEmotes(emotes), emoteAt: parseEmoteRanges(emotes), mod: false, broadcaster, sub, id: String(Math.random()) }),
   /** Test hook: pretend someone just subscribed. */
   subscribe: (login: string) => handleSub(login.toLowerCase(), login, ''),
 };

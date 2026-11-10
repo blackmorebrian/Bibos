@@ -28,8 +28,9 @@ const basic = (color: string | number, map?: THREE.Texture) =>
 const screenLit = new THREE.MeshBasicMaterial({
   color: '#ffffff', side: THREE.DoubleSide, transparent: true, opacity: 0, depthWrite: false, depthFunc: THREE.LessEqualDepth,
 });
-function brightCopy(screen: THREE.Mesh): THREE.Mesh {
-  const m = new THREE.Mesh(screen.geometry, screenLit);
+const chatLit = screenLit.clone();
+function brightCopy(screen: THREE.Mesh, mat = screenLit): THREE.Mesh {
+  const m = new THREE.Mesh(screen.geometry, mat);
   m.renderOrder = 31;
   m.visible = false;
   screen.add(m);
@@ -184,7 +185,11 @@ export class World {
   private tmpColor = new THREE.Color();
   private tmpColor2 = new THREE.Color();
 
-  constructor(screenTex: THREE.Texture) {
+  /** The two side-screen chat walls (shown instead of the pixels in chat mode). */
+  private chatScreens: THREE.Mesh[] = [];
+  private chatBright: THREE.Mesh[] = [];
+
+  constructor(screenTex: THREE.Texture, private chatTex: THREE.Texture) {
     const g = this.group;
     g.add(this.sky.mesh);
 
@@ -281,6 +286,11 @@ export class World {
       const tri = basic(PALS[0][1]);
       this.triMats.push(tri);
       g.add(shape([[x0, 21], [x0 + s * 15.4, 21], [x0, 31]], -17.6, tri));
+      const chat = rect(x0 + s * 0.15, 2.75, x0 + s * 15.25, 20.05, -17.45, basic('#ffffff', this.chatTex));
+      chat.visible = false;
+      g.add(chat);
+      this.chatScreens.push(chat);
+      this.chatBright.push(brightCopy(chat, chatLit));
       for (let c = 0; c < 9; c++) for (let r = 0; r < 8; r++) {
         const x = x0 + s * (0.25 + c * 1.68), y = 3.1 + r * 2.15;
         cells.push(new THREE.Matrix4().makeTranslation(x + s * 0.71, y + 0.925, -17.5));
@@ -310,6 +320,7 @@ export class World {
     g.add(main);
     brightScreens.push(brightCopy(main));
     screenLit.map = screenTex;
+    chatLit.map = this.chatTex;
 
     const deck = new THREE.Mesh(new THREE.PlaneGeometry(100, 15), basic('#3c28c4'));
     deck.rotation.x = -Math.PI / 2;
@@ -350,8 +361,13 @@ export class World {
     this.seaUniforms.uBeat.value = beat;
     this.seaUniforms.uE.value = S.E;
     this.seaUniforms.uDim.value = S.dim;
-    screenLit.opacity = Math.min(1, S.dim / 0.86);
+    screenLit.opacity = chatLit.opacity = Math.min(1, S.dim / 0.86);
     for (const m of brightScreens) m.visible = S.dim > 0.01;
+    // Chat mode swaps the pixel screens for the chat walls (blackout takes them dark too).
+    const chatOn = S.screens.mode === 'chat';
+    this.panelCells.visible = !chatOn;
+    for (const m of this.chatScreens) m.visible = chatOn && !S.ld.blackout;
+    for (const m of this.chatBright) m.visible = chatOn && S.dim > 0.01;
 
     const bar = Math.floor(beat / 4), ph = ((beat % 1) + 1) % 1, kick = Math.pow(1 - ph, 3);
     const sect = ((Math.floor(bar / 8) % 4) + 4) % 4, pal = PALS[sect];

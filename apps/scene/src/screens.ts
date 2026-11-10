@@ -18,7 +18,8 @@ export const IMAGES: Record<string, string[]> = {
   diamond: ['....#....', '...#+#...', '..#+++#..', '.#+++++#.', '.#+++++#.', '..#+++#..', '...#+#...', '....#....'],
 };
 
-export const SCREEN_MODES = [...PATTERNS, ...Object.keys(IMAGES)];
+/** 'chat' shows live Twitch chat in real text instead of the pixels (chatwall.ts). */
+export const SCREEN_MODES = [...PATTERNS, 'chat', ...Object.keys(IMAGES)];
 
 /* 5x7 font: 5 columns per letter, bit 0 = top row. */
 const FONT: Record<string, number[]> = {

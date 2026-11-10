@@ -73,6 +73,7 @@
           <dt>!dj focus name</dt><dd>Close-up on a viewer's Bibo</dd>
           <dt>!dj screens heart</dt><dd>Side screens: auto, meter, stripes, checker, ripple, solid, off, heart, star, smile, note, bolt, fire, arrow, diamond</dd>
           <dt>!dj screens text HELLO</dt><dd>Scrolling text on the side screens</dd>
+          <dt>!dj screens chat</dt><dd>Live Twitch chat on the side screens (commands, bots and links are left out; deleted messages come off)</dd>
           <dt>!dj help / help off</dt><dd>Show or hide the commands card</dd>
           <dt>!dj helpevery 10</dt><dd>Auto-show the card every N minutes (0 = never)</dd>
           <dt>!dj jetpack name</dt><dd>Launch someone's jetpack (<code>all</code> = everyone)</dd>
@@ -231,6 +232,9 @@
 
     <section class="panel">
       <h2>Side screens</h2>
+      <div class="grid g1" data-group="screens">
+        <button data-cmd="screens" data-arg="chat">💬 Twitch chat</button>
+      </div>
       <div class="grid g4" data-group="screens">
         <button data-cmd="screens" data-arg="auto">Auto</button>
         <button data-cmd="screens" data-arg="meter">Meter</button>

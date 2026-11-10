@@ -23,7 +23,7 @@ const BOTS = new Set([
   'commanderroot', 'botisimo', 'deepbot', 'coebot', 'ankhbot', 'phantombot', 'pretzelrocks', 'kofistreambot',
   'streamstickers', 'own3d', 'blerp', 'tangiabot', 'frostytoolsdotcom', 'lumiastream', 'creatisbot',
 ]);
-const isBot = (login: string) => BOTS.has(login) || login.endsWith('bot');
+export const isBot = (login: string) => BOTS.has(login) || login.endsWith('bot');
 
 const COMMANDS: Record<string, ActionId> = {
   '!clap': 'clap', '!phone': 'phone', '!lighter': 'lighter', '!jump': 'jump', '!dance': 'dance', '!flag': 'flag', '!wave': 'flag',

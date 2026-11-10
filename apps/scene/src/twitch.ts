@@ -15,6 +15,18 @@ export interface ChatMessage {
   broadcaster: boolean;
   /** Subscriber (or founder) badge. */
   sub: boolean;
+  /** Twitch's message id (so a mod's delete can find it). */
+  id?: string;
+  /** Emotes by character position, for drawing them inline. */
+  emoteAt?: { start: number; end: number; id: string }[];
+}
+
+/** Extra chat events for the side-screen chat wall. */
+export interface ChatModeration {
+  /** A mod deleted one message. */
+  deleted?: (id: string) => void;
+  /** A mod cleared the whole chat. */
+  cleared?: () => void;
 }
 
 export interface TwitchStatus { state: string; msgs: number; channel: string }
@@ -31,6 +43,7 @@ export class TwitchChat {
     private onClear: (login: string) => void,
     /** Someone subscribed (or was gifted a sub). */
     private onSub?: (login: string, display: string, color: string) => void,
+    private mod: ChatModeration = {},
   ) {
     this.status = { state: 'connecting', msgs: 0, channel };
     this.connect();
@@ -78,7 +91,8 @@ export class TwitchChat {
       case 'PING': this.ws?.send(`PONG :${trailing}`); break;
       case 'RECONNECT': this.ws?.close(); break;
       case 'JOIN': this.status.state = 'connected'; this.retry = 1000; break;
-      case 'CLEARCHAT': if (trailing) this.onClear(trailing.toLowerCase()); break;
+      case 'CLEARCHAT': if (trailing) this.onClear(trailing.toLowerCase()); else this.mod.cleared?.(); break;
+      case 'CLEARMSG': if (tags['target-msg-id']) this.mod.deleted?.(tags['target-msg-id']); break;
       case 'PRIVMSG': {
         const login = prefix.split('!')[0].toLowerCase();
         let text = trailing;
@@ -95,6 +109,8 @@ export class TwitchChat {
           mod: tags['mod'] === '1',
           broadcaster: badges.includes('broadcaster/'),
           sub: /(^|,)(subscriber|founder)\//.test(badges),
+          id: tags['id'],
+          emoteAt: parseEmoteRanges(tags['emotes'] ?? ''),
         });
         break;
       }
@@ -114,6 +130,18 @@ function parseTags(s: string): Record<string, string> {
   for (const kv of s.split(';')) {
     const i = kv.indexOf('=');
     out[kv.slice(0, i)] = kv.slice(i + 1).replace(/\\s/g, ' ').replace(/\\:/g, ';').replace(/\\\\/g, '\\');
+  }
+  return out;
+}
+
+/** "25:0-4,12-16/1902:6-10" -> each emote with its character range. */
+export function parseEmoteRanges(tag: string): { start: number; end: number; id: string }[] {
+  const out: { start: number; end: number; id: string }[] = [];
+  if (!tag) return out;
+  for (const part of tag.split('/')) {
+    const [id, ranges] = part.split(':');
+    if (!ranges) continue;
+    for (const r of ranges.split(',')) { const [a, b] = r.split('-').map(Number); if (b >= a) out.push({ start: a, end: b, id }); }
   }
   return out;
 }

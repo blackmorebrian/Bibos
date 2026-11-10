@@ -18,7 +18,7 @@ import { Stats, Bench, pct } from './stats';
 import { updateCamera, cutTo, SHOT_NAMES } from './camera';
 import { SpriteBatch } from './sprites';
 import { TwitchChat, parseEmotes } from './twitch';
-import { handleChat, removeViewer, restoreViewers, joinedCount } from './viewers';
+import { handleChat, removeViewer, restoreViewers, joinedCount, handleSub } from './viewers';
 import { connectHub } from './control';
 
 // Flat paper colors: treat every color value as final sRGB, like Canvas 2D.
@@ -73,7 +73,7 @@ const fx = new Fx(atlas, crowdR.baseTex);
 scene.add(world.group, crowdR.mesh, crowdR.glowMesh, lights.group, fx.group);
 
 // Real Twitch chat (read-only, anonymous). Without ?channel= the fake chat runs.
-const twitch = params.channel ? new TwitchChat(params.channel, handleChat, removeViewer) : null;
+const twitch = params.channel ? new TwitchChat(params.channel, handleChat, removeViewer, handleSub) : null;
 if (twitch) restoreViewers();
 const hub = connectHub();
 
@@ -201,6 +201,8 @@ requestAnimationFrame(frame);
 (window as any).__bibos = {
   S, crowd, crowdR, renderer, scene, camera, atlas, stats,
   /** Test hook: pretend someone typed in chat, e.g. __bibos.say('kevin', '!bibo') or say('kevin', 'Kappa', '25:0-4'). */
-  say: (login: string, text: string, emotes = '', broadcaster = false) =>
-    handleChat({ login: login.toLowerCase(), display: login, color: '', text, emotes: parseEmotes(emotes), mod: false, broadcaster }),
+  say: (login: string, text: string, emotes = '', broadcaster = false, sub = false) =>
+    handleChat({ login: login.toLowerCase(), display: login, color: '', text, emotes: parseEmotes(emotes), mod: false, broadcaster, sub }),
+  /** Test hook: pretend someone just subscribed. */
+  subscribe: (login: string) => handleSub(login.toLowerCase(), login, ''),
 };

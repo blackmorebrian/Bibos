@@ -8,7 +8,7 @@ import {
   mulberry, type ActionId, type BiboLook,
 } from '@bibos/shared';
 import {
-  S, crowd, emote, addFloat, liveChat, joins, makeBot, rnd, SEA, clock, drop, toggleLights, appendBibo, removeBibo, pyro,
+  S, crowd, emote, jetpack, addFloat, liveChat, joins, makeBot, rnd, SEA, clock, drop, toggleLights, appendBibo, removeBibo, pyro,
   type Bibo, type ShotName,
 } from './sim';
 import { autoCut, cutTo, SHOT_NAMES } from './camera';
@@ -221,6 +221,12 @@ export function applyCommand(what: string, arg: string, lag = 0): void {
     }
     case 'look': if (LOOK_NAMES.includes(arg)) S.look = arg; break;
     case 'kick': if (arg) removeViewer(arg.replace(/^@/, '')); break;
+    case 'jetpack': case 'jet': { // launch someone (or everyone in the crowd who's a viewer)
+      const b = byLogin.get(arg.replace(/^@/, '').toLowerCase());
+      if (b) jetpack(b);
+      else if (arg === 'all') { let k = 0; for (const v of byLogin.values()) if (k++ < 40) jetpack(v); }
+      break;
+    }
     case 'help':
       if (arg === 'off' || arg === 'hide') { if (S.t - S.helpAt < HELP_SECONDS - 0.5) S.helpAt = S.t - HELP_SECONDS + 0.45; } // slide it away now
       else S.helpAt = S.t;
@@ -260,6 +266,9 @@ export function handleChat(m: ChatMessage): void {
     else if (a && !fresh) emote(a, 'jump');
   } else if (PART_CMDS[cmd] && args.length) {
     restyle((l) => setPart(l, PART_CMDS[cmd], args[0]));
+  } else if (cmd === '!jetpack' || cmd === '!jet') {
+    // Subscriber perk (you can always use it, to show it off).
+    if (m.sub || m.broadcaster) { a = a ?? joinViewer(m.login, m.display, m.color); if (a) jetpack(a); }
   } else if (cmd === '!random' || cmd === '!reroll') {
     restyle((l) => { Object.assign(l, randomLook((Math.random() * 2 ** 32) >>> 0)); return true; });
   } else if (COMMANDS[cmd]) {
@@ -308,3 +317,10 @@ export function restoreViewers(): void {
 /** How long the commands card stays up. */
 export const HELP_SECONDS = 20;
 export { ACTIONS };
+
+/** New sub or gifted sub: they're in the crowd with a jetpack entrance. */
+export function handleSub(login: string, display: string, color: string): void {
+  if (!login || isBot(login)) return;
+  const a = byLogin.get(login) ?? joinViewer(login, display || login, color);
+  if (a) setTimeout(() => jetpack(a), 300);
+}

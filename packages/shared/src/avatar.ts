@@ -41,7 +41,9 @@ export const ACTIONS = ['clap', 'phone', 'lighter', 'jump', 'dance', 'flag'] as 
 export type ActionId = (typeof ACTIONS)[number];
 export const ACTION_DURATION: Record<ActionId, number> = { clap: 4.5, phone: 8, lighter: 8, jump: 2.6, dance: 7, flag: 9 };
 /** Numeric codes shared with the crowd shader. */
-export const EM = { none: 0, clap: 1, phone: 2, lighter: 3, jump: 4, dance: 5, flag: 6, pump: 7 } as const;
+export const EM = { none: 0, clap: 1, phone: 2, lighter: 3, jump: 4, dance: 5, flag: 6, pump: 7, jet: 8 } as const;
+/** Subscriber jetpack: lift off, hover over the crowd, land. */
+export const JET_SECONDS = 2.1;
 
 /** Placeholder emotes (the real build uses the channel's Twitch emotes). */
 export const PLACEHOLDER_EMOTES = ['heart', 'fire', 'skull', 'star', 'laugh', 'w'] as const;

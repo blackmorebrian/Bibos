@@ -7,9 +7,9 @@
  * and only re-uploaded when the order or a Bibo's state changed.
  */
 import * as THREE from 'three';
-import { BODY_COLORS, SHIRT_COLORS, HEAD_TOP, HEADS } from '@bibos/shared';
+import { BODY_COLORS, SHIRT_COLORS, HEAD_TOP, HEADS, JET_SECONDS } from '@bibos/shared';
 import { type Atlas, headCell, hatCell, bodyCell } from '@bibos/bibo-art';
-import { S, crowd, type Bibo } from './sim';
+import { S, crowd, jetLift, type Bibo } from './sim';
 
 const STRIDE = 20;
 const PARTS = 12;
@@ -28,6 +28,7 @@ function vertexShader(atlas: Atlas): string {
 #define CELL_LIGHTER ${c('lighter')}
 #define CELL_FLAG ${c('flag')}
 const float PI = 3.14159265;
+const float JET_SECONDS = ${JET_SECONDS.toFixed(2)};
 const float TAU = 6.28318531;
 
 attribute float aPart;
@@ -95,6 +96,14 @@ void main() {
     hop = sin(q * PI) * 1.15;
     sq = 1.0 + 0.1 * sin(q * PI) - 0.14 * pow(1.0 - q, 8.0);
     L = vec2(-0.6, -2.05); R = vec2(0.6, -2.05);
+  } else if (em == 8.0) {
+    // Jetpack: ease up, hover with a little wobble, drop back down.
+    float q = clamp(1.0 - (iE.y - t) / JET_SECONDS, 0.0, 1.0);
+    float up = q < 0.2 ? 1.0 - pow(1.0 - q / 0.2, 3.0) : q < 0.72 ? 1.0 : 1.0 - pow((q - 0.72) / 0.28, 2.0);
+    hop = up * 4.4 + (q > 0.2 && q < 0.72 ? sin(t * 8.0 + seed) * 0.1 : 0.0);
+    sq = 1.0;
+    lean = sin(t * 3.1 + seed) * 0.09 * up;
+    L = vec2(-0.78, -1.15 - 0.5 * up); R = vec2(0.78, L.y);
   } else if (em == 5.0) {
     float s = sin(b * PI);
     lean = s * 0.26;
@@ -386,9 +395,11 @@ export function poseHop(a: Bibo, t: number, beat: number): { hop: number; em: nu
   if (S.dim > 0.5 && em !== 4 && em !== 5) amp *= 0.35;
   let hop = Math.sin(ph * Math.PI) * 0.14 * amp;
   if (em === 4) { const q = (((b % 1.5) + 1.5) % 1.5) / 1.5; hop = Math.sin(q * Math.PI) * 1.15; }
+  if (em === 8) hop = jetLift(a, t) * 4.4;
   const wd = t - S.waveAt - a.z / 11;
   if (wd > 0 && wd < 0.6) hop += Math.sin((wd / 0.6) * Math.PI) * 0.85;
   const age = t - a.born;
   if (age < 0.8) { const k = 1 - age / 0.8; hop += k * k * 2.4; }
   return { hop, em };
 }
+

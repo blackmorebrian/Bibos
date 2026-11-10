@@ -130,6 +130,23 @@ function explode(p: Particle): void {
   }
 }
 
+/* ---------- jetpack ---------- */
+let jetAcc = 0;
+/** Flame and sparks out of a flying Bibo's jetpack, pointing down. */
+export function jetFlame(x: number, y: number, z: number, dt: number, thrust: number): void {
+  jetAcc += 110 * dt * thrust;
+  while (jetAcc >= 1) {
+    jetAcc--;
+    add({ k: K.FLAME, x: x + rr(-0.12, 0.12), y, z: z + 0.15, vx: rr(-0.5, 0.5), vy: rr(-9, -6), vz: rr(-0.5, 0.5), life: rr(0.22, 0.36), s: rr(0.75, 1.1), r: 1, g: 1, b: 1, drag: 2, grav: 0, sky: false });
+    if (R() < 0.35) add({ k: K.SPARK, x, y, z: z + 0.15, vx: rr(-2, 2), vy: rr(-7, -3), vz: rr(-2, 2), life: rr(0.3, 0.6), s: 0.35, r: 1, g: 0.8, b: 0.4, drag: 0.6, grav: -14, sky: false });
+  }
+}
+/** Take-off: a puff of smoke and a ring of sparks on the ground. */
+export function jetBurst(x: number, z: number): void {
+  for (let i = 0; i < 10; i++) add({ k: K.PUFF, x: x + rr(-0.3, 0.3), y: 0.2, z: z + rr(-0.3, 0.3), vx: rr(-3, 3), vy: rr(0.5, 2), vz: rr(-3, 3), life: rr(0.6, 1), s: rr(0.5, 0.8), r: 0.93, g: 0.96, b: 1, drag: 2.5, grav: 0, sky: false });
+  for (let i = 0; i < 16; i++) { const q = (i / 16) * Math.PI * 2; add({ k: K.SPARK, x, y: 0.15, z, vx: Math.cos(q) * rr(4, 6), vy: rr(1, 3), vz: Math.sin(q) * rr(4, 6), life: rr(0.3, 0.5), s: 0.4, r: 1, g: 0.85, b: 0.45, drag: 1, grav: -10, sky: false }); }
+}
+
 /* ---------- simulation ---------- */
 export function pyroTick(dt: number, now: number): void {
   for (let i = pending.length - 1; i >= 0; i--) if (now >= pending[i].at) { pending.splice(i, 1); launch(); }

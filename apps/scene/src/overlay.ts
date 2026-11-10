@@ -139,6 +139,7 @@ export class Overlay {
       ['!extra', opts(EXTRAS)],
       ['!pattern', opts(PATTERNS)],
       ['moves', ['!clap', '!dance', '!jump', '!lighter', '!phone', '!flag'].map((x) => ({ x }))],
+      ['subs', [{ x: '!jetpack  fly over the crowd' }]],
     ];
 
     // Lay out first so the card can be sized to fit.
@@ -175,7 +176,7 @@ export class Overlay {
       if (o.kind === 'pill') {
         g.font = `400 ${pillFs}px ${DISPLAY}`;
         const pw = g.measureText(o.s).width + pillFs * 1.0, ph = pillFs * 1.5;
-        g.fillStyle = o.s === 'moves' ? INK : '#ff3d81';
+        g.fillStyle = o.s === 'moves' ? INK : o.s === 'subs' ? '#7c5cff' : '#ff3d81';
         g.beginPath(); g.roundRect(o.x, o.y - ph / 2, pw, ph, ph * 0.25); g.fill();
         g.fillStyle = PAPER; g.fillText(o.s.toUpperCase(), o.x + pillFs * 0.5, o.y + pillFs * 0.06);
       } else {

@@ -4,7 +4,7 @@
  * state shape and scoring rules stay.
  */
 import {
-  ACTION_DURATION, ACTIONS, BeatClock, BODY_COLORS, EM, EXTRAS, HATS, HEADS, PATTERNS, PLACEHOLDER_EMOTES, SHIRT_COLORS,
+  ACTION_DURATION, ACTIONS, BeatClock, JET_SECONDS, BODY_COLORS, EM, EXTRAS, HATS, HEADS, PATTERNS, PLACEHOLDER_EMOTES, SHIRT_COLORS,
   clamp, mulberry, type ActionId, type BiboLook,
 } from '@bibos/shared';
 import { params } from './params';
@@ -199,6 +199,34 @@ export function removeBibo(a: Bibo): void {
   crowdChanged();
 }
 
+/** 0..1 jetpack height for a flying Bibo (matches the shader). */
+export function jetLift(a: Bibo, t: number): number {
+  const q = Math.min(1, Math.max(0, 1 - (a.emEnd - t) / JET_SECONDS));
+  return q < 0.2 ? 1 - Math.pow(1 - q / 0.2, 3) : q < 0.72 ? 1 : 1 - Math.pow((q - 0.72) / 0.28, 2);
+}
+
+/** Subscriber perk: blast off over the crowd. */
+const flying: Bibo[] = [];
+export function jetpack(a: Bibo): boolean {
+  if (a.em === EM.jet && S.t < a.emEnd) return false; // already in the air
+  a.em = EM.jet;
+  a.emEnd = S.t + JET_SECONDS;
+  a.lastEmote = S.t;
+  a.dirty = true;
+  if (!flying.includes(a)) flying.push(a);
+  P.jetBurst(a.x, a.z);
+  return true;
+}
+function jetTick(t: number, dt: number): void {
+  for (let i = flying.length - 1; i >= 0; i--) {
+    const a = flying[i];
+    if (a.em !== EM.jet || t >= a.emEnd || !crowd.includes(a)) { flying.splice(i, 1); continue; }
+    const lift = jetLift(a, t);
+    // Thrust is strongest on take-off and landing.
+    P.jetFlame(a.x, lift * 4.4 + 0.1, a.z, dt, 0.6 + 0.4 * (1 - lift));
+  }
+}
+
 export function emote(a: Bibo, act: ActionId, extra = 0): void {
   a.em = EM[act];
   a.emEnd = S.t + ACTION_DURATION[act] + extra;
@@ -320,6 +348,7 @@ export function spamEmote(em: string): void {
 
 export function simTick(dt: number): void {
   const t = S.t, n = crowd.length;
+  jetTick(t, dt);
   const spam = S.spam && t < S.spam.until;
   if (!live) S.msgDebt += n * (0.35 * Math.pow(S.chat, 1.5) + (spam ? 0.75 : 0)) * dt;
   let guard = 0;

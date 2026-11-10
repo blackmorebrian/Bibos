@@ -13,6 +13,8 @@ export interface ChatMessage {
   emotes: string[];
   mod: boolean;
   broadcaster: boolean;
+  /** Subscriber (or founder) badge. */
+  sub: boolean;
 }
 
 export interface TwitchStatus { state: string; msgs: number; channel: string }
@@ -27,6 +29,8 @@ export class TwitchChat {
     private onMessage: (m: ChatMessage) => void,
     /** A ban or timeout: remove that user's Bibo. */
     private onClear: (login: string) => void,
+    /** Someone subscribed (or was gifted a sub). */
+    private onSub?: (login: string, display: string, color: string) => void,
   ) {
     this.status = { state: 'connecting', msgs: 0, channel };
     this.connect();
@@ -90,7 +94,15 @@ export class TwitchChat {
           emotes: parseEmotes(tags['emotes'] ?? ''),
           mod: tags['mod'] === '1',
           broadcaster: badges.includes('broadcaster/'),
+          sub: /(^|,)(subscriber|founder)\//.test(badges),
         });
+        break;
+      }
+      case 'USERNOTICE': {
+        // New subs, resubs and gift subs: the new subscriber gets a jetpack entrance.
+        const id = tags['msg-id'];
+        if (id === 'sub' || id === 'resub') this.onSub?.(tags['login'] ?? '', tags['display-name'] || tags['login'] || '', tags['color'] ?? '');
+        else if (id === 'subgift') this.onSub?.((tags['msg-param-recipient-user-name'] ?? '').toLowerCase(), tags['msg-param-recipient-display-name'] ?? '', '');
         break;
       }
     }

@@ -16,11 +16,22 @@ const roomIn = $<HTMLInputElement>('room'), passIn = $<HTMLInputElement>('passwo
 const loginMsg = $('loginMsg'), dot = $('dot'), statusText = $('statusText');
 
 interface SceneState {
+  id?: string; layout?: string;
   look: string; colors: [string, string] | null; intensity: number; speed: number; lasers: string;
   strobe: boolean; blackout: boolean; lights: boolean; bpm: number; shot: string; auto: boolean; viewers: number;
   helpUp?: boolean; glow?: number; helpEvery?: number; zoom?: number; pan?: number; height?: number; pace?: string; screens?: string; screenText?: string;
 }
 let state: SceneState | null = null;
+/** Every crowd that has reported lately (widescreen and vertical OBS sources). */
+const crowds = new Map<string, { state: SceneState; at: number }>();
+/** The crowd the desk shows: the widescreen one if there is one, else the oldest-named. */
+function primary(): string | undefined {
+  const now = Date.now();
+  for (const [k, v] of crowds) if (now - v.at > 4000) crowds.delete(k);
+  const all = [...crowds.values()].map((v) => v.state);
+  all.sort((a, b) => Number(a.layout === 'vertical') - Number(b.layout === 'vertical') || String(a.id).localeCompare(String(b.id)));
+  return all[0]?.id ?? 'one';
+}
 let ws: WebSocket | null = null;
 let creds: { room: string; password: string } | null = null;
 let scenes = 0;
@@ -84,8 +95,9 @@ function connect(): void {
       scenes = msg.scenes;
       refreshStatus();
     } else if (msg.type === 'state') {
-      state = msg as SceneState;
-      render();
+      const st = msg as SceneState;
+      crowds.set(st.id ?? 'one', { state: st, at: Date.now() });
+      if (st.id === primary()) { state = st; render(); }
     }
   };
   sock.onclose = () => {
@@ -103,7 +115,9 @@ function setStatus(kind: 'ok' | 'warn' | 'bad', text: string): void {
   statusText.textContent = text;
 }
 function refreshStatus(): void {
-  if (scenes > 0) setStatus('ok', `Live: crowd connected${state ? ` · ${state.viewers} Bibo${state.viewers === 1 ? '' : 's'}` : ''}`);
+  const n = crowds.size, kinds = [...crowds.values()].map((v) => v.state.layout);
+  const which = n > 1 ? `${n} crowds connected (${kinds.includes('wide') ? 'widescreen' : ''}${kinds.includes('wide') && kinds.includes('vertical') ? ' + ' : ''}${kinds.includes('vertical') ? 'vertical' : ''})` : 'crowd connected';
+  if (scenes > 0) setStatus('ok', `Live: ${which}${state ? ` · ${state.viewers} Bibo${state.viewers === 1 ? '' : 's'}` : ''}`);
   else setStatus('warn', 'Signed in, but the crowd isn’t open in OBS');
 }
 

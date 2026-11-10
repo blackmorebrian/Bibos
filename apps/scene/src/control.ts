@@ -13,11 +13,14 @@ export function connectHub(): HubStatus {
   if (!params.hub || !params.channel) return status;
   let ws: WebSocket | null = null, retry = 1000, pingT = 0;
 
+  // Each crowd (e.g. a widescreen and a vertical OBS source) reports separately; the desk
+  // follows one of them so its buttons don't flicker between the two.
+  const id = Math.random().toString(36).slice(2, 10);
   const report = () => {
     if (ws?.readyState !== 1) return;
     const L = S.ld;
     ws.send(JSON.stringify({
-      type: 'state', look: S.look, colors: L.colors, intensity: L.intensity, glow: L.glow, speed: L.speed, lasers: L.lasers,
+      type: 'state', id, layout: innerHeight > innerWidth ? 'vertical' : 'wide', look: S.look, colors: L.colors, intensity: L.intensity, glow: L.glow, speed: L.speed, lasers: L.lasers,
       strobe: L.strobe, blackout: L.blackout, lights: S.lights, bpm: clock.bpm, shot: S.shot, auto: S.auto,
       zoom: S.zoom, pan: S.cam.panX, height: S.cam.panY, pace: S.cam.pace, screens: S.screens.mode, helpUp: S.t - S.helpAt < HELP_SECONDS, helpEvery: S.helpEvery, screenText: S.screens.text,
       viewers: live ? joinedCount() : crowd.length,

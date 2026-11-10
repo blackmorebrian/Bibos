@@ -99,7 +99,7 @@ function ensureSlots(n: number): void {
     const half = 13 + Math.floor(r * 0.25);
     for (let c = -half; c <= half; c++) {
       const x = c * 1.07 + (r % 2 ? 0.53 : 0) + (r2() - 0.5) * 0.42;
-      const z = 1 + r * 1.03 + (r2() - 0.5) * 0.42;
+      const z = 4.6 + r * 1.03 + (r2() - 0.5) * 0.42; // first row clear of the stage and inside the wide shot
       slots.push({ x, z, k: z + Math.abs(x) * 0.55 });
     }
   }
@@ -141,16 +141,45 @@ export const crowd: Bibo[] = [];
 export let crowdVersion = 0;
 
 export function setCrowd(n: number): void {
-  n = Math.max(1, Math.floor(n));
+  n = Math.max(0, Math.floor(n));
   ensureSlots(n);
   while (crowd.length < n) crowd.push(makeBot(crowd.length, slots[crowd.length], crowd.length < 140 ? -10 : S.t));
   while (crowd.length > n) crowd.pop();
+  crowdChanged();
+}
+
+/** Crowd footprint drives camera framing, light aim and where the painted backdrop crowd starts.
+ *  Never smaller than ~80 spots, so an empty or tiny crowd still has an open area in front of the stage. */
+const MIN_FOOTPRINT = 150;
+function crowdChanged(): void {
+  const m = Math.max(crowd.length, MIN_FOOTPRINT);
+  ensureSlots(m);
   let sum = 0, max = 0, K = 0;
-  for (const a of crowd) { sum += a.z; if (a.z > max) max = a.z; K = Math.max(K, a.z + Math.abs(a.x) * 0.55); }
-  S.midZ = sum / crowd.length;
+  for (let i = 0; i < m; i++) {
+    const p = crowd[i] ?? slots[i];
+    sum += p.z; if (p.z > max) max = p.z; K = Math.max(K, p.z + Math.abs(p.x) * 0.55);
+  }
+  S.midZ = sum / m;
   S.maxZ = max;
   S.K = K;
   crowdVersion++;
+}
+
+/** A new Bibo in the next free spot (front rows fill first). */
+export function appendBibo(): Bibo {
+  ensureSlots(crowd.length + 1);
+  const a = makeBot(crowd.length, slots[crowd.length], S.t);
+  crowd.push(a);
+  crowdChanged();
+  return a;
+}
+
+/** Remove a Bibo. The newest arrival steps into the gap so the crowd stays packed. */
+export function removeBibo(a: Bibo): void {
+  const last = crowd.pop()!;
+  if (last !== a) { last.x = a.x; last.z = a.z; last.id = a.id; crowd[a.id] = last; last.dirty = true; }
+  if (S.target === a) S.target = null;
+  crowdChanged();
 }
 
 export function emote(a: Bibo, act: ActionId, extra = 0): void {
@@ -164,6 +193,7 @@ export function emote(a: Bibo, act: ActionId, extra = 0): void {
 export interface Float { x: number; z: number; em: string; sea: boolean; at: number; life: number; dx: number }
 export const floats: Float[] = [];
 export function addFloat(x: number, z: number, em: string, sea: boolean): void {
+  if (sea && !params.backdrop) return;
   if (floats.length < 240) floats.push({ x, z, em, sea, at: S.t, life: 2.1 + rnd() * 0.7, dx: rnd() * Math.PI * 2 });
 }
 
@@ -231,6 +261,8 @@ export function hypeBurst(): void {
     emote(a, 'jump', rnd() * 1.2 - 0.4);
     if (i < 130) addFloat(a.x, a.z, pool[i % pool.length], false);
   });
+  // The painted backdrop crowd joins in too, so a small crowd still gets a big moment.
+  for (let i = 0; i < 40; i++) { const sp = SEA[Math.floor(rnd() * SEA.length)]; if (sp[1] > S.maxZ + 2) addFloat(sp[0], sp[1], pool[i % pool.length], true); }
 }
 
 export function drop(): void {
@@ -259,6 +291,7 @@ export function simTick(dt: number): void {
   const spam = S.spam && t < S.spam.until;
   if (!live) S.msgDebt += n * (0.35 * Math.pow(S.chat, 1.5) + (spam ? 0.75 : 0)) * dt;
   let guard = 0;
+  if (!n) S.msgDebt = 0;
   while (S.msgDebt >= 1 && guard++ < 400) {
     S.msgDebt--;
     const a = crowd[Math.floor(rnd() * n)];
@@ -312,6 +345,7 @@ export function simTick(dt: number): void {
   if (!reduceMotion && S.E > 0.8 && Math.floor(S.beat) % 16 === 0 && bph < win) S.pyro = Math.max(S.pyro, 0.7);
 
   // Fake viewers pressing action buttons.
+  if (!n) S.actDebt = 0;
   S.actDebt += n * 0.032 * (0.3 + S.E) * (S.lights ? 0.25 : 1) * dt;
   guard = 0;
   while (S.actDebt >= 1 && guard++ < 200) {

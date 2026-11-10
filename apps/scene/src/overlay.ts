@@ -4,7 +4,7 @@
  */
 import * as THREE from 'three';
 import { clamp, HEADS, HATS, EXTRAS, PATTERNS, BODY_COLORS, BODY_COLOR_NAMES, SHIRT_COLORS, SHIRT_COLOR_NAMES } from '@bibos/shared';
-import { HELP_SECONDS } from './viewers';
+import { HELP_SECONDS, joinedCount } from './viewers';
 import { crowd, S, fireworks, reduceMotion, clock, joins, live } from './sim';
 import { poseHop } from './crowd';
 import { params } from './params';
@@ -223,7 +223,10 @@ export class Overlay {
       g.fillStyle = fg; g.fillText(text, X + fs * 0.6, y + h / 2 + fs * 0.03);
       return X + w;
     };
-    this.tagRight = tag(`${crowd.length} BIBOS IN THE CROWD`, m, m, PAPER, INK, 28 * k);
+    // Live, only real viewers count.
+    const n = live ? joinedCount() : crowd.length;
+    const label = n === 0 ? 'BE THE FIRST IN THE CROWD' : `${n} BIBO${n === 1 ? '' : 'S'} IN THE CROWD`;
+    this.tagRight = tag(label, m, m, PAPER, INK, 28 * k);
     const alt = live && Math.floor(S.t / 8) % 2 === 1;
     tag(alt ? 'TYPE !BIBOHELP TO CUSTOMIZE' : 'TYPE !BIBO TO GET IN', -m, H - m - 28 * k * 1.8, '#ff3d81', PAPER, 28 * k);
   }

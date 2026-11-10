@@ -10,12 +10,13 @@ const SHOTS: Record<ShotName, (t: number) => Shot> = {
   wide: (t) => ({ p: [Math.sin(t * 0.13) * 6, 6.6, -5], l: [Math.sin(t * 0.13) * 2.5, 4.4, 13], f: 0.92 }),
   sweep: (t) => { const x = Math.sin(t * 0.2) * 11; return { p: [x, 2, -2.8], l: [x * 0.82, 1.6, 7], f: 1 }; },
   over: (t) => ({ p: [Math.cos(t * 0.14) * 5, 10 + S.maxZ * 0.2, S.midZ - 11 + Math.sin(t * 0.11) * 1.5], l: [Math.cos(t * 0.14) * 1.5, 1.5, S.midZ + 7], f: 1.02 }),
-  close: (t) => { const a = S.target || crowd[0]; return { p: [a.x + Math.sin(t * 0.35) * 0.7, 2.05, a.z - 3.7], l: [a.x, 1.55, a.z], f: 0.92 }; },
+  close: (t) => { const a = S.target || crowd[0] || { x: 0, z: 4 }; return { p: [a.x + Math.sin(t * 0.35) * 0.7, 2.05, a.z - 3.7], l: [a.x, 1.55, a.z], f: 0.92 }; },
   back: (t) => ({ p: [Math.sin(t * 0.11) * 6, 8, S.maxZ + 12], l: [Math.sin(t * 0.11) * 2, 13, -17], f: 0.72 }),
 };
 export const SHOT_NAMES = Object.keys(SHOTS) as ShotName[];
 
-function pickTarget(): Bibo {
+function pickTarget(): Bibo | null {
+  if (!crowd.length) return null;
   const rec = crowd.filter((a) => S.t - a.lastEmote < 3 && a.z < 16);
   if (rec.length) return pick(rec);
   const a = crowd[Math.floor(rnd() * Math.min(crowd.length, 70))];
@@ -29,12 +30,13 @@ export function cutTo(n: ShotName, target?: Bibo): void {
   S.mx = 0;
   S.my = 0;
   if (n === 'close') S.target = target || pickTarget();
+  if (n === 'close' && !S.target) S.shot = 'wide'; // nobody to close up on yet
 }
 
 export function autoCut(bar: number): void {
   const pool: ShotName[] = S.lights ? ['wide', 'back', 'close', 'wide'] : ['wide', 'sweep', 'over', 'close', 'back', 'close'];
   let n = pick(pool), g = 0;
-  while (n === S.shot && g++ < 8) n = pick(pool);
+  while ((n === S.shot || (n === 'close' && !crowd.length)) && g++ < 8) n = pick(pool);
   cutTo(n);
   S.nextCut = bar + (n === 'close' ? 2 : pick([2, 3, 4])) * (S.lights ? 2 : 1);
 }

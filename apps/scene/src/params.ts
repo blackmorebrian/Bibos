@@ -7,8 +7,8 @@ const num = (k: string, d: number) => (q.has(k) && q.get(k) !== '' ? Number(q.ge
 export type CamRoute = 'clip' | 'direct' | 'relay' | 'off';
 
 export const params = {
-  /** Number of real (full-color) Bibos. */
-  n: num('n', 500),
+  /** Number of made-up filler Bibos. Live (with ?channel=) the crowd starts empty and only real viewers appear. */
+  n: num('n', q.get('channel') ? 0 : 500),
   /** Benchmark length in seconds (0 = free run). */
   bench: num('bench', 0),
   hud: q.get('hud') === '1' || q.has('bench'),
@@ -34,6 +34,8 @@ export const params = {
   help: num('help', 10),
   /** Seconds a chat message takes to reach the scene; "!dj beat" subtracts it so the downbeat lands right. */
   beatlag: num('beatlag', 0.3),
+  /** Painted far-away festival crowd behind the real Bibos (scenery, not counted). 0 = open field. */
+  backdrop: q.get('backdrop') !== '0',
   /** Free-text tag stored with bench results (e.g. "streaming-nvenc"). */
   tag: q.get('tag') ?? '',
 };

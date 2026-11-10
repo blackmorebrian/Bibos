@@ -7,7 +7,10 @@ import {
   ACTIONS, BODY_COLORS, BODY_COLOR_NAMES, EXTRAS, HATS, HEADS, PATTERNS, SHIRT_COLORS, SHIRT_COLOR_NAMES,
   mulberry, type ActionId, type BiboLook,
 } from '@bibos/shared';
-import { S, crowd, emote, addFloat, liveChat, joins, makeBot, rnd, SEA, clock, drop, toggleLights, type Bibo, type ShotName } from './sim';
+import {
+  S, crowd, emote, addFloat, liveChat, joins, makeBot, rnd, SEA, clock, drop, toggleLights, appendBibo, removeBibo,
+  type Bibo, type ShotName,
+} from './sim';
 import { cutTo, SHOT_NAMES } from './camera';
 import { params } from './params';
 import type { ChatMessage } from './twitch';
@@ -106,9 +109,8 @@ function nameColor(login: string, c: string): string {
 export function joinViewer(login: string, display: string, color: string, quiet = false): Bibo | null {
   const have = byLogin.get(login);
   if (have) return have;
-  // Front-most NPC (crowd is ordered nearest the stage first).
-  const a = crowd.find((b) => !b.viewer);
-  if (!a) return null;
+  // Take over the front-most filler Bibo if there are any, else step into the next free spot.
+  const a = crowd.find((b) => !b.viewer) ?? appendBibo();
   a.viewer = login;
   a.name = display;
   a.nameColor = nameColor(login, color);
@@ -130,9 +132,11 @@ export function removeViewer(login: string): void {
   const a = byLogin.get(login);
   if (!a) return;
   byLogin.delete(login);
-  // Back to an anonymous crowd member in the same spot.
-  const npc = makeBot(a.id, { x: a.x, z: a.z, k: 0 }, S.t);
-  Object.assign(a, npc, { viewer: undefined, dirty: true });
+  if (crowd.some((b) => !b.viewer)) {
+    // Filler crowd present: turn back into an anonymous filler Bibo in the same spot.
+    const npc = makeBot(a.id, { x: a.x, z: a.z, k: 0 }, S.t);
+    Object.assign(a, npc, { viewer: undefined, dirty: true });
+  } else removeBibo(a);
   save();
 }
 

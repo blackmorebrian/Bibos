@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { mulberry } from '@bibos/shared';
 import { S } from './sim';
 import { canvasTexture } from './sprites';
+import { params } from './params';
 
 export const PALS = [['#ff3d81', '#19d3c5'], ['#ffc21a', '#7c5cff'], ['#19d3c5', '#ff7a2f'], ['#ff4fd8', '#ffe066']];
 const CF = ['#ff3d81', '#ffc21a', '#19d3c5', '#ffffff', '#7c5cff', '#ff7a2f'];
@@ -197,6 +198,7 @@ export class World {
   /** Re-place filler rows around the current crowd footprint. */
   layoutSea(): void {
     const front: number[][] = [], side: number[][] = [];
+    if (!params.backdrop) { this.seaFront.set(front); this.seaSide.set(side); return; }
     let i = 0;
     for (let z = S.maxZ + 2.4; z < 160; z += 1.7 + z * 0.05, i++) front.push([-180, 360, z, (i * 11.3) % TILE, i % 3]);
     i = 0;

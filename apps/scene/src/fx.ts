@@ -7,6 +7,7 @@ import type { Atlas } from '@bibos/bibo-art';
 import { EmoteSheet } from './emotes';
 import { S, floats, confetti, SEA, rnd, reduceMotion } from './sim';
 import { SpriteBatch, canvasTexture, glowTexture, rgb } from './sprites';
+import { params } from './params';
 
 function cellUv(atlas: Atlas, key: string): number[] {
   const idx = atlas.cells.get(key)!;
@@ -123,7 +124,7 @@ export class Fx {
     this.dimColor.setRGB(1 - (1 - 30 / 255) * k, 1 - (1 - 26 / 255) * k, 1 - (1 - 92 / 255) * k);
     const G = this.seaGlow;
     G.begin();
-    if (k > 0.01 && !back) {
+    if (k > 0.01 && !back && params.backdrop) {
       const a = Math.min(0.6, k * 0.75);
       for (const sp of SEA) {
         if (sp[1] < S.maxZ + 2) continue;

@@ -291,8 +291,8 @@ export class Crowd {
   /** Call when crowd membership changes. */
   rebuild(): void {
     const n = crowd.length;
-    this.master = new Float32Array(n * STRIDE);
-    this.sorted = new Float32Array(n * STRIDE);
+    this.master = new Float32Array(Math.max(1, n) * STRIDE);
+    this.sorted = new Float32Array(Math.max(1, n) * STRIDE);
     this.depth = new Float32Array(n);
     this.order = crowd.map((_, i) => i);
     for (const a of crowd) { a.dirty = true; this.write(a); }
@@ -310,6 +310,7 @@ export class Crowd {
     const names = ['iA', 'iB', 'iC', 'iD', 'iE'];
     names.forEach((nm, i) => this.geo.setAttribute(nm, new THREE.InterleavedBufferAttribute(this.buf, 4, i * 4)));
     this.geo.instanceCount = n;
+    if (this.mesh) this.mesh.visible = this.glowMesh.visible = n > 0;
     this.forceUpload = true;
   }
   private forceUpload = true;

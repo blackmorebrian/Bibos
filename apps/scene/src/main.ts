@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { buildAtlas } from '@bibos/bibo-art';
 import { ACTIONS } from '@bibos/shared';
 import { params, serverBase } from './params';
-import { S, clock, crowd, crowdVersion, setCrowd, simTick, drop, toggleLights, spamEmote, everyone, type ShotName } from './sim';
+import { S, clock, crowd, crowdVersion, setCrowd, live, simTick, drop, toggleLights, spamEmote, everyone, type ShotName } from './sim';
 import { Crowd } from './crowd';
 import { World } from './world';
 import { Lights } from './lights';
@@ -98,8 +98,8 @@ addEventListener('keydown', (e) => {
   else if (k === 'w') spamEmote('fire');
   else if (k === 'j') everyone(ACTIONS[Math.floor(Math.random() * ACTIONS.length)]);
   else if (k === 't') clock.tap(performance.now() / 1000);
-  else if (k === '=' || k === '+') setCrowd(crowd.length + 100);
-  else if (k === '-') setCrowd(crowd.length - 100);
+  else if ((k === '=' || k === '+') && !live) setCrowd(crowd.length + 100);
+  else if (k === '-' && !live) setCrowd(crowd.length - 100);
   else if (k === 'u') hudOn = !hudOn;
   else if (k === 'c') S.helpAt = S.t;
 });
@@ -119,7 +119,7 @@ addEventListener('wheel', (e) => { S.zoom = Math.max(0.7, Math.min(2.4, S.zoom *
 /* ---------- frame loop ---------- */
 let hudOn = params.hud;
 let last = performance.now();
-let seenVersion = crowdVersion;
+let seenVersion = -1; // force a rebuild on the first frame (viewers may have been restored after the renderer was made)
 let hudAt = 0, uploadsAt = 0, uploadsRate = 0;
 const right = new THREE.Vector3(), up = new THREE.Vector3(), fwd = new THREE.Vector3();
 

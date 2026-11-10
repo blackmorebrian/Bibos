@@ -15,8 +15,11 @@ const loginEl = $('login'), deskEl = $('desk');
 const roomIn = $<HTMLInputElement>('room'), passIn = $<HTMLInputElement>('password'), rememberIn = $<HTMLInputElement>('remember');
 const loginMsg = $('loginMsg'), dot = $('dot'), statusText = $('statusText');
 
+/** The crowd version this desk expects (CROWD_VERSION in the scene's control.ts). */
+const CROWD_VERSION = 3;
+
 interface SceneState {
-  id?: string; layout?: string;
+  v?: number; id?: string; layout?: string;
   look: string; chase?: string; colors: [string, string] | null; intensity: number; speed: number; lasers: string;
   strobe: boolean; blackout: boolean; lights: boolean; bpm: number; shot: string; auto: boolean; viewers: number;
   helpUp?: boolean; strobeRate?: number; glow?: number; helpEvery?: number; zoom?: number; pan?: number; height?: number; pace?: string; screens?: string; screenText?: string;
@@ -24,15 +27,17 @@ interface SceneState {
 let state: SceneState | null = null;
 /** Every crowd that has reported lately (widescreen and vertical OBS sources). */
 const crowds = new Map<string, { state: SceneState; at: number }>();
-/** The crowd the desk shows: the widescreen one if there is one, else the oldest-named. */
+/** The crowd the desk shows: an up-to-date one first, then widescreen over vertical, then the oldest-named. */
 function primary(): string | undefined {
   const now = Date.now();
   for (const [k, v] of crowds) if (now - v.at > 4000) crowds.delete(k);
   const all = [...crowds.values()].map((v) => v.state);
-  all.sort((a, b) => Number(a.layout === 'vertical') - Number(b.layout === 'vertical') || String(a.id).localeCompare(String(b.id)));
+  all.sort((a, b) => Number((a.v ?? 0) < CROWD_VERSION) - Number((b.v ?? 0) < CROWD_VERSION) || Number(a.layout === 'vertical') - Number(b.layout === 'vertical') || String(a.id).localeCompare(String(b.id)));
   return all[0]?.id ?? 'one';
 }
 let ws: WebSocket | null = null;
+/** Button groups just pressed: keep the new pick lit until the crowd reports it. */
+const held = new Map<string, number>();
 let creds: { room: string; password: string } | null = null;
 let scenes = 0;
 let retry = 1000;
@@ -117,7 +122,9 @@ function setStatus(kind: 'ok' | 'warn' | 'bad', text: string): void {
 function refreshStatus(): void {
   const n = crowds.size, kinds = [...crowds.values()].map((v) => v.state.layout);
   const which = n > 1 ? `${n} crowds connected (${kinds.includes('wide') ? 'widescreen' : ''}${kinds.includes('wide') && kinds.includes('vertical') ? ' + ' : ''}${kinds.includes('vertical') ? 'vertical' : ''})` : 'crowd connected';
-  if (scenes > 0) setStatus('ok', `Live: ${which}${state ? ` · ${state.viewers} Bibo${state.viewers === 1 ? '' : 's'}` : ''}`);
+  const old = [...crowds.values()].filter((c) => (c.state.v ?? 0) < CROWD_VERSION).map((c) => c.state.layout === 'vertical' ? 'vertical' : 'widescreen');
+  if (scenes > 0 && old.length) setStatus('warn', `A ${[...new Set(old)].join(' and ')} crowd is out of date: in OBS, click that Bibos source and press Refresh`);
+  else if (scenes > 0) setStatus('ok', `Live: ${which}${state ? ` · ${state.viewers} Bibo${state.viewers === 1 ? '' : 's'}` : ''}`);
   else setStatus('warn', 'Signed in, but the crowd isn’t open in OBS');
 }
 
@@ -136,6 +143,12 @@ document.querySelectorAll<HTMLButtonElement>('button[data-cmd]').forEach((b) => 
       arg = what === 'lights' ? (on ? 'up' : 'down') : on ? 'off' : 'on';
     }
     send(what, arg);
+    // Light the pick straight away (the crowd confirms a moment later).
+    const group = b.closest<HTMLElement>('[data-group]')?.dataset.group;
+    if (group) {
+      document.querySelectorAll<HTMLButtonElement>(`[data-group="${group}"] button`).forEach((x) => x.classList.toggle('on', x === b));
+      held.set(group, Date.now() + 1500);
+    }
     b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash');
   });
 });
@@ -220,6 +233,7 @@ function render(): void {
   refreshStatus();
   const s = state;
   const mark = (group: string, value: string) =>
+    (held.get(group) ?? 0) < Date.now() &&
     document.querySelectorAll<HTMLButtonElement>(`[data-group="${group}"] button`).forEach((b) => b.classList.toggle('on', b.dataset.arg === value));
   mark('look', s.look);
   mark('chase', s.chase ?? 'auto');

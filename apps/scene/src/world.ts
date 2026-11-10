@@ -22,6 +22,21 @@ const CROWD_H = 1.8, TILE = 30;
 const basic = (color: string | number, map?: THREE.Texture) =>
   new THREE.MeshBasicMaterial({ color, map: map ?? null, side: THREE.DoubleSide });
 
+/* Lights down tints the whole frame dark. Like a real stage, the video screens stay bright:
+   each webcam screen gets a copy drawn after the tint (fx.ts, render order 30), only where the
+   screen itself is visible (same depth), fading in as the lights go down. */
+const screenLit = new THREE.MeshBasicMaterial({
+  color: '#ffffff', side: THREE.DoubleSide, transparent: true, opacity: 0, depthWrite: false, depthFunc: THREE.LessEqualDepth,
+});
+function brightCopy(screen: THREE.Mesh): THREE.Mesh {
+  const m = new THREE.Mesh(screen.geometry, screenLit);
+  m.renderOrder = 31;
+  m.visible = false;
+  screen.add(m);
+  return m;
+}
+const brightScreens: THREE.Mesh[] = [];
+
 function rect(x0: number, y0: number, x1: number, y1: number, z: number, mat: THREE.Material): THREE.Mesh {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(x1 - x0), Math.abs(y1 - y0)), mat);
   m.position.set((x0 + x1) / 2, (y0 + y1) / 2, z);
@@ -189,6 +204,7 @@ export class World {
       const scr = rect(x - 8, 8, x + 8, 17, 45.8, basic('#ffffff', screenTex));
       scr.rotation.y = Math.PI; // face the DJ's-view camera
       g.add(scr);
+      brightScreens.push(brightCopy(scr));
     }
 
     this.buildStage(screenTex);
@@ -290,7 +306,10 @@ export class World {
     g.add(rect(-36, 33.2, 36, 34, -15, basic('#1c1266')));
 
     g.add(rect(-20.35, 3.65, 20.35, 26.85, -17.05, basic(PAPER)));
-    g.add(rect(-20, 4, 20, 26.5, -17, basic('#ffffff', screenTex)));
+    const main = rect(-20, 4, 20, 26.5, -17, basic('#ffffff', screenTex));
+    g.add(main);
+    brightScreens.push(brightCopy(main));
+    screenLit.map = screenTex;
 
     const deck = new THREE.Mesh(new THREE.PlaneGeometry(100, 15), basic('#3c28c4'));
     deck.rotation.x = -Math.PI / 2;
@@ -331,6 +350,8 @@ export class World {
     this.seaUniforms.uBeat.value = beat;
     this.seaUniforms.uE.value = S.E;
     this.seaUniforms.uDim.value = S.dim;
+    screenLit.opacity = Math.min(1, S.dim / 0.86);
+    for (const m of brightScreens) m.visible = S.dim > 0.01;
 
     const bar = Math.floor(beat / 4), ph = ((beat % 1) + 1) % 1, kick = Math.pow(1 - ph, 3);
     const sect = ((Math.floor(bar / 8) % 4) + 4) % 4, pal = PALS[sect];

@@ -6,12 +6,11 @@
  */
 import * as THREE from 'three';
 import { clamp } from '@bibos/shared';
-import { S, reduceMotion } from './sim';
+import { S, reduceMotion, activeLook } from './sim';
 import { PALS } from './world';
 import { SpriteBatch, glowTexture, rgb } from './sprites';
 import { glows } from './bloom';
 
-const LOOKS = ['fan', 'cross', 'chase', 'wave', 'pulse'];
 const MAX_BEAMS = 220;
 const STRIDE = 16;
 
@@ -124,7 +123,7 @@ export class Lights {
     const t = this.lt;
     const ph = ((beat % 1) + 1) % 1, kick = Math.pow(1 - ph, 2.4), bar = Math.floor(beat / 4);
     const pal = (L.colors ?? PALS[((Math.floor(bar / 8) % 4) + 4) % 4]).map(rgb);
-    const look = S.look === 'auto' ? LOOKS[((Math.floor(bar / 4) % 5) + 5) % 5] : S.look;
+    const look = activeLook(bar);
     // Strobe: beams only, once per beat (kept slow on purpose; never full-screen).
     const strobe = L.strobe && !reduceMotion ? (ph < 0.16 ? 1.25 : 0.06) : 1;
     const power = L.blackout ? 0 : clamp(0.35 + S.E * 0.75, 0, 1.25) * (1 - S.dim * 0.85) * L.intensity * strobe;

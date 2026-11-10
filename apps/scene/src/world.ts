@@ -5,7 +5,7 @@
  */
 import * as THREE from 'three';
 import { mulberry } from '@bibos/shared';
-import { S } from './sim';
+import { S, activeLook, reduceMotion } from './sim';
 import { canvasTexture } from './sprites';
 import { params } from './params';
 import { IMAGES, textColumns } from './screens';
@@ -13,6 +13,7 @@ import { glows } from './bloom';
 
 export const PALS = [['#ff3d81', '#19d3c5'], ['#ffc21a', '#7c5cff'], ['#19d3c5', '#ff7a2f'], ['#ff4fd8', '#ffe066']];
 const WHITE = new THREE.Color('#ffffff');
+const clamp01 = (v: number) => Math.max(0, Math.min(1.5, v));
 const CF = ['#ff3d81', '#ffc21a', '#19d3c5', '#ffffff', '#7c5cff', '#ff7a2f'];
 const PAPER = '#fffdf6';
 const CROWD_H = 1.8, TILE = 30;
@@ -165,6 +166,7 @@ export class World {
   private ferrisSpin!: THREE.Group;
   private flags: THREE.Mesh[] = [];
   private tmpColor = new THREE.Color();
+  private tmpColor2 = new THREE.Color();
 
   constructor(screenTex: THREE.Texture) {
     const g = this.group;
@@ -353,7 +355,7 @@ export class World {
       for (let r = 0; r < 8; r++) {
         const y = 7 - r; // row counted from the top
         let on: string | null;
-        if (scr === 'off') on = null;
+        if (scr === 'off' || S.ld.blackout) on = null; // blackout takes the pixel screens dark too
         else if (scr === 'solid') on = two[0];
         else if (img) { const ch = img[y][x]; on = ch === '#' ? two[0] : ch === '+' ? two[1] : null; }
         else if (cols) on = y < 7 && (cols[(scroll + x) % cols.length] >> y) & 1 ? two[0] : null;
@@ -374,16 +376,47 @@ export class World {
     }
     this.panelCells.instanceColor!.needsUpdate = true;
 
+    /* Screen rings and the LED strip along the stage front are part of the light rig:
+       same look, colors, intensity, strobe and blackout as the beams. */
+    const L = S.ld, look = activeLook(bar);
+    const [cA, cB] = L.colors ?? pal;
+    const strobing = L.strobe && !reduceMotion;
+    const power = L.blackout ? 0 : Math.min(1.2, L.intensity) * (1 - S.dim * 0.6);
+    const lit = (on: string, level: number, off: string) => {
+      const v = clamp01(level) * power;
+      col.set(off).lerp(this.tmpColor2.set(on), Math.min(1, v));
+      if (v > 1) col.lerp(WHITE, (v - 1) * 1.5);
+    };
+    const flash = ph < 0.16 ? 1 : 0.04; // strobe: one short hit per beat
     let ri = 0;
     for (let k = 3; k >= 0; k--) {
-      const on = (k + Math.floor(beat * 2)) % 4 < 2;
-      col.set(on ? pal[k % 2] : '#2c1ca3');
+      const r = 3 - k; // 0 = innermost ring
+      let lv: number, c = r % 2 ? cB : cA;
+      if (strobing) { lv = flash; c = PAPER; }
+      else if (look === 'chase') lv = (r + Math.floor(beat * 2)) % 4 < 2 ? 1 : 0.05;
+      else if (look === 'cross') lv = (r + Math.floor(beat)) % 2 ? 1 : 0.15;
+      else if (look === 'wave') lv = 0.5 + 0.5 * Math.sin(beat * Math.PI - r * 1.2);
+      else if (look === 'pulse') lv = 0.12 + kick;
+      else lv = 0.65 + 0.35 * kick; // fan: steady, breathing on the kick
+      lit(c, lv, '#2c1ca3');
       for (let b = 0; b < 4; b++) this.rings.setColorAt(ri++, col);
     }
     this.rings.instanceColor!.needsUpdate = true;
 
-    const strip = [PAPER, '#ffc21a', '#19d3c5', PAPER];
-    for (let i = 0; i < 25; i++) { col.set(strip[(i + Math.floor(beat * 2)) % 4]); this.deckLeds.setColorAt(i, col); }
+    for (let i = 0; i < 25; i++) {
+      const u = i / 24;
+      let lv: number, c = i % 2 ? cB : cA;
+      if (strobing) { lv = flash; c = PAPER; }
+      else if (look === 'chase') { // a bright head running left to right, twice a beat, with a tail
+        const head = ((beat * 2) % 1 + 1) % 1, d = ((head - u) % 1 + 1) % 1;
+        lv = d < 0.04 ? 1.25 : Math.max(0.06, 1 - d * 4); c = d < 0.04 ? PAPER : cA;
+      } else if (look === 'cross') lv = (i + Math.floor(beat)) % 2 ? 1 : 0.1;
+      else if (look === 'wave') lv = 0.5 + 0.5 * Math.sin(beat * Math.PI - u * 9);
+      else if (look === 'pulse') { lv = 0.08 + kick * 1.2; c = cA; }
+      else { lv = 0.7 + 0.3 * kick; c = u < 0.5 ? cA : cB; } // fan: split colors, steady
+      lit(c, lv, '#241a7a');
+      this.deckLeds.setColorAt(i, col);
+    }
     this.deckLeds.instanceColor!.needsUpdate = true;
 
     const pulse = 1 + 0.08 * kick;

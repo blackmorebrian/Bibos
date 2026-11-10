@@ -427,3 +427,9 @@ export function everyone(act: ActionId): void {
   for (const a of crowd) emote(a, act, rnd() * 0.6);
 }
 export { ACTIONS };
+
+/** The light look running now: the designer's pick, or auto (changes every 4 bars). */
+export const LOOKS = ['fan', 'cross', 'chase', 'wave', 'pulse'];
+export function activeLook(bar: number): string {
+  return S.look === 'auto' ? LOOKS[((Math.floor(bar / 4) % 5) + 5) % 5] : S.look;
+}

@@ -9,7 +9,7 @@ import {
 } from '@bibos/shared';
 import { params } from './params';
 import * as P from './pyro';
-import { LOOKS } from './looks';
+import { MOTIONS, CHASE_AUTO } from './looks';
 
 export let rnd = mulberry(params.seed);
 export const pick = <T,>(a: readonly T[]): T => a[Math.floor(rnd() * a.length)];
@@ -33,6 +33,8 @@ export const S = {
   pyro: 0,
   co2: 0,
   look: 'auto' as string,
+  /** Chase pattern on top of the motion: 'auto', 'none' (all on) or a chase name. */
+  chase: 'auto' as string,
   auto: !reduceMotion,
   shot: 'wide' as ShotName,
   cutAt: 0,
@@ -433,5 +435,10 @@ export { ACTIONS };
 
 /** The light look running now: the designer's pick, or auto (changes every 4 bars). */
 export function activeLook(bar: number): string {
-  return S.look === 'auto' ? LOOKS[((Math.floor(bar / 4) % LOOKS.length) + LOOKS.length) % LOOKS.length] : S.look;
+  return S.look === 'auto' ? MOTIONS[((Math.floor(bar / 4) % MOTIONS.length) + MOTIONS.length) % MOTIONS.length] : S.look;
+}
+/** The chase running now ('none' = all lights on). Auto changes 2 bars after the motion does. */
+export function activeChase(bar: number): string {
+  const n = CHASE_AUTO.length;
+  return S.chase === 'auto' ? CHASE_AUTO[((Math.floor((bar + 2) / 4) % n) + n) % n] : S.chase;
 }

@@ -7,10 +7,12 @@
  * screen rings can follow it.
  */
 
-/** Order of the auto show (each look runs 4 bars). */
-export const LOOKS = [
-  'fan', 'cross', 'chase', 'wave', 'pulse', 'sweep', 'circle', 'bounce', 'ballyhoo', 'center', 'snap', 'tilt', 'random',
-];
+/** How the heads move. Auto runs each for 4 bars. */
+export const MOTIONS = ['fan', 'cross', 'wave', 'sweep', 'circle', 'ballyhoo', 'snap', 'tilt'];
+/** Which lights are on, layered on top of any motion. 'none' = all on. */
+export const CHASES = ['chase', 'bounce', 'center', 'random', 'pulse'];
+/** Auto chase order (4 bars each, changing 2 bars after the motion does): every other slot all-on. */
+export const CHASE_AUTO = ['none', 'chase', 'none', 'bounce', 'none', 'center', 'pulse', 'random'];
 
 const fract = (x: number) => x - Math.floor(x);
 /** Stable pseudo-random 0..1 for a fixture and a step. */
@@ -41,8 +43,7 @@ export function aim(look: string, i: number, u: number, beat: number, kick: numb
     }
     // Everyone tilts up on the kick and falls back down.
     case 'tilt': return { ang: s * 0.5, tilt: 0.15 + 0.75 * kick, amp: 0.7 + 0.5 * kick };
-    // Chase family: fixed fan, brightness does the moving.
-    default: return { ang: s * 0.6, tilt: 0.5, amp: chaseLevel(look, u, beat, kick, t) };
+    default: return { ang: s * 0.6, tilt: 0.5, amp: 1 };
   }
 }
 

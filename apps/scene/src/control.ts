@@ -20,7 +20,7 @@ export function connectHub(): HubStatus {
     if (ws?.readyState !== 1) return;
     const L = S.ld;
     ws.send(JSON.stringify({
-      type: 'state', id, layout: innerHeight > innerWidth ? 'vertical' : 'wide', look: S.look, colors: L.colors, intensity: L.intensity, glow: L.glow, speed: L.speed, lasers: L.lasers,
+      type: 'state', id, layout: innerHeight > innerWidth ? 'vertical' : 'wide', look: S.look, chase: S.chase, colors: L.colors, intensity: L.intensity, glow: L.glow, speed: L.speed, lasers: L.lasers,
       strobe: L.strobe, strobeRate: L.strobeRate, blackout: L.blackout, lights: S.lights, bpm: clock.bpm, shot: S.shot, auto: S.auto,
       zoom: S.zoom, pan: S.cam.panX, height: S.cam.panY, pace: S.cam.pace, screens: S.screens.mode, helpUp: S.t - S.helpAt < HELP_SECONDS, helpEvery: S.helpEvery, screenText: S.screens.text,
       viewers: live ? joinedCount() : crowd.length,

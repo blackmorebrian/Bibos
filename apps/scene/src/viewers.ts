@@ -13,7 +13,7 @@ import {
 } from './sim';
 import { autoCut, cutTo, SHOT_NAMES } from './camera';
 import { SCREEN_MODES } from './screens';
-import { LOOKS as LIGHT_LOOKS, STROBE_RATES } from './looks';
+import { MOTIONS, CHASES, STROBE_RATES } from './looks';
 import { params } from './params';
 import type { ChatMessage } from './twitch';
 
@@ -150,7 +150,6 @@ const PART_CMDS: Record<string, Part> = {
 let helpAsked = -99;
 
 /* ---------- DJ controls: "!dj <command>" from you or your mods (Stream Deck "Chat Message" keys) ---------- */
-const LOOK_NAMES = ['auto', ...LIGHT_LOOKS];
 function djCommand(args: string[]): void {
   const [what = '', ...rest] = args.map((a) => a.toLowerCase());
   applyCommand(what, rest.join(' '), params.beatlag);
@@ -186,7 +185,7 @@ export function applyCommand(what: string, arg: string, lag = 0): void {
     }
     case 'strobespeed': { const r = parseFloat(arg); if (STROBE_RATES.includes(r)) L.strobeRate = r; break; }
     case 'blackout': L.blackout = onOff(arg, L.blackout); break;
-    case 'reset': Object.assign(L, { colors: null, intensity: 1, speed: 1, glow: 1, strobeRate: 1, lasers: 'auto', strobe: false, blackout: false }); S.look = 'auto'; break;
+    case 'reset': Object.assign(L, { colors: null, intensity: 1, speed: 1, glow: 1, strobeRate: 1, lasers: 'auto', strobe: false, blackout: false }); S.look = 'auto'; S.chase = 'auto'; break;
     case 'drop': drop(); break;
     case 'lights':
       if (['down', 'off', 'dark'].includes(arg)) { if (!S.lights) toggleLights(); }
@@ -226,7 +225,16 @@ export function applyCommand(what: string, arg: string, lag = 0): void {
       else if (SCREEN_MODES.includes(mode)) S.screens = { mode, text: S.screens.text };
       break;
     }
-    case 'look': if (LOOK_NAMES.includes(arg)) S.look = arg; break;
+    case 'look': // a motion, a chase, or auto (both back to auto)
+      if (arg === 'auto') { S.look = 'auto'; S.chase = 'auto'; }
+      else if (MOTIONS.includes(arg)) S.look = arg;
+      else if (CHASES.includes(arg)) S.chase = arg;
+      break;
+    case 'motion': case 'move': if (arg === 'auto' || MOTIONS.includes(arg)) S.look = arg; break;
+    case 'chase':
+      if (['none', 'off', 'all'].includes(arg)) S.chase = 'none';
+      else if (arg === 'auto' || CHASES.includes(arg)) S.chase = arg;
+      break;
     case 'kick': if (arg) removeViewer(arg.replace(/^@/, '')); break;
     case 'jetpack': case 'jet': { // launch someone (or everyone in the crowd who's a viewer)
       const b = byLogin.get(arg.replace(/^@/, '').toLowerCase());

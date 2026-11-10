@@ -5,7 +5,7 @@
  */
 import * as THREE from 'three';
 import { mulberry } from '@bibos/shared';
-import { S, activeLook, reduceMotion } from './sim';
+import { S, activeLook, activeChase, reduceMotion } from './sim';
 import { canvasTexture } from './sprites';
 import { params } from './params';
 import { IMAGES, textColumns } from './screens';
@@ -379,7 +379,8 @@ export class World {
 
     /* Screen rings and the LED strip along the stage front are part of the light rig:
        same look, colors, intensity, strobe and blackout as the beams. */
-    const L = S.ld, look = activeLook(bar);
+    // The LEDs follow the chase; with no chase they follow the motion's own pattern.
+    const L = S.ld, chase = activeChase(bar), look = chase === 'none' ? activeLook(bar) : chase;
     const [cA, cB] = L.colors ?? pal;
     const strobing = L.strobe && !reduceMotion;
     const power = L.blackout ? 0 : Math.min(1.2, L.intensity) * (1 - S.dim * 0.6);

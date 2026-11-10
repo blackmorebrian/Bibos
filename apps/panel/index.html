@@ -47,7 +47,9 @@
           <dt>!dj hype</dt><dd>Hype finale: meter to full</dd>
           <dt>!dj lights down / up</dt><dd>Lights down (lighters &amp; phones) or back up</dd>
           <dt>!dj colors ff3d81 19d3c5</dt><dd>Light colors as two hex color codes, or <code>auto</code> to follow the show</dd>
-          <dt>!dj look fan</dt><dd>Movement: fan, cross, wave, sweep, circle, ballyhoo, snap, tilt. Chases: chase, bounce, center, random, pulse. Or auto.</dd>
+          <dt>!dj motion sweep</dt><dd>How the lights move: fan, cross, wave, sweep, circle, ballyhoo, snap, tilt, or auto</dd>
+          <dt>!dj chase bounce</dt><dd>Which lights are on, on top of the movement: chase, bounce, center, random, pulse, none (all on), or auto</dd>
+          <dt>!dj look auto</dt><dd>Movement and chase both back to auto</dd>
           <dt>!dj intensity 1.5</dt><dd>Brightness, 0 to 2</dd>
           <dt>!dj glow 1</dt><dd>Light glow, 0 to 2</dd>
           <dt>!dj speed 2</dt><dd>Light movement speed, 0.1 to 4</dd>
@@ -114,27 +116,28 @@
 
     <section class="panel">
       <h2>Looks</h2>
-      <div class="grid g6" data-group="look">
-        <button data-cmd="look" data-arg="auto">Auto</button>
-      </div>
+      <p class="hint">Pick one movement and one chase: they run together.</p>
       <h3 class="sub">Movement</h3>
       <div class="grid g4" data-group="look">
-        <button data-cmd="look" data-arg="fan">Fan</button>
-        <button data-cmd="look" data-arg="cross">Cross</button>
-        <button data-cmd="look" data-arg="wave">Wave</button>
-        <button data-cmd="look" data-arg="sweep">Sweep</button>
-        <button data-cmd="look" data-arg="circle">Circles</button>
-        <button data-cmd="look" data-arg="ballyhoo">Ballyhoo</button>
-        <button data-cmd="look" data-arg="snap">Snap</button>
-        <button data-cmd="look" data-arg="tilt">Tilt hits</button>
+        <button data-cmd="motion" data-arg="auto">Auto</button>
+        <button data-cmd="motion" data-arg="fan">Fan</button>
+        <button data-cmd="motion" data-arg="cross">Cross</button>
+        <button data-cmd="motion" data-arg="wave">Wave</button>
+        <button data-cmd="motion" data-arg="sweep">Sweep</button>
+        <button data-cmd="motion" data-arg="circle">Circles</button>
+        <button data-cmd="motion" data-arg="ballyhoo">Ballyhoo</button>
+        <button data-cmd="motion" data-arg="snap">Snap</button>
+        <button data-cmd="motion" data-arg="tilt">Tilt hits</button>
       </div>
       <h3 class="sub">Chases</h3>
-      <div class="grid g5" data-group="look">
-        <button data-cmd="look" data-arg="chase">Left → right</button>
-        <button data-cmd="look" data-arg="bounce">Bounce</button>
-        <button data-cmd="look" data-arg="center">Center out</button>
-        <button data-cmd="look" data-arg="random">Random</button>
-        <button data-cmd="look" data-arg="pulse">Pulse</button>
+      <div class="grid g4" data-group="chase">
+        <button data-cmd="chase" data-arg="auto">Auto</button>
+        <button data-cmd="chase" data-arg="none">All on</button>
+        <button data-cmd="chase" data-arg="chase">Left → right</button>
+        <button data-cmd="chase" data-arg="bounce">Bounce</button>
+        <button data-cmd="chase" data-arg="center">Center out</button>
+        <button data-cmd="chase" data-arg="random">Random</button>
+        <button data-cmd="chase" data-arg="pulse">Pulse</button>
       </div>
     </section>
 

@@ -17,7 +17,7 @@ const loginMsg = $('loginMsg'), dot = $('dot'), statusText = $('statusText');
 
 interface SceneState {
   id?: string; layout?: string;
-  look: string; colors: [string, string] | null; intensity: number; speed: number; lasers: string;
+  look: string; chase?: string; colors: [string, string] | null; intensity: number; speed: number; lasers: string;
   strobe: boolean; blackout: boolean; lights: boolean; bpm: number; shot: string; auto: boolean; viewers: number;
   helpUp?: boolean; strobeRate?: number; glow?: number; helpEvery?: number; zoom?: number; pan?: number; height?: number; pace?: string; screens?: string; screenText?: string;
 }
@@ -222,6 +222,7 @@ function render(): void {
   const mark = (group: string, value: string) =>
     document.querySelectorAll<HTMLButtonElement>(`[data-group="${group}"] button`).forEach((b) => b.classList.toggle('on', b.dataset.arg === value));
   mark('look', s.look);
+  mark('chase', s.chase ?? 'auto');
   mark('lasers', s.lasers);
   mark('shot', s.auto ? 'auto' : s.shot);
   mark('pace', s.pace ?? 'normal');

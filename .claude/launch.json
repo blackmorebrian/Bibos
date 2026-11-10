@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "stress", "runtimeExecutable": "node", "runtimeArgs": ["tools/stress-server.mjs", "8787"], "port": 8787 }
+  ]
+}

@@ -1,0 +1,3 @@
+{ "name": "@bibos/scene", "version": "0.0.0", "private": true, "type": "module",
+  "scripts": { "dev": "vite --host", "build": "vite build" },
+  "dependencies": { "@bibos/shared": "*", "@bibos/bibo-art": "*" } }

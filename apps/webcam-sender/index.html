@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bibos Webcam Sender</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; padding: 20px; font: 15px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif; background: #17114f; color: #fffdf6; }
+    h1 { font-size: 20px; margin: 0 0 12px; color: #ffc21a; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+    select, input, button { font: inherit; padding: 8px 10px; border-radius: 6px; border: 0; }
+    button { background: #ffc21a; color: #1a1358; font-weight: 700; cursor: pointer; }
+    video { width: 480px; max-width: 100%; background: #000; border-radius: 6px; display: block; }
+    pre { background: #0e0a3a; padding: 10px; border-radius: 6px; white-space: pre-wrap; max-width: 760px; }
+    .hint { color: #cfcaff; max-width: 760px; }
+  </style>
+</head>
+<body>
+  <h1>Bibos webcam sender (relay route)</h1>
+  <p class="hint">Opens the OBS Virtual Camera and streams it to the crowd scene over WebRTC. Keep this window open while testing. Try minimizing it to check for throttling.</p>
+  <div class="row">
+    <label>Camera <select id="dev"></select></label>
+    <label>Server <input id="server" size="22" placeholder="host:port"></label>
+    <button id="go">Start</button>
+  </div>
+  <video id="v" muted playsinline autoplay></video>
+  <pre id="log"></pre>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

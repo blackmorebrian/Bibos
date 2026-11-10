@@ -12,6 +12,7 @@ import { World } from './world';
 import { Lights } from './lights';
 import { Fx } from './fx';
 import { Webcam } from './webcam';
+import { Bloom } from './bloom';
 import { Overlay } from './overlay';
 import { Stats, Bench, pct } from './stats';
 import { updateCamera, cutTo, SHOT_NAMES } from './camera';
@@ -76,6 +77,8 @@ const twitch = params.channel ? new TwitchChat(params.channel, handleChat, remov
 if (twitch) restoreViewers();
 const hub = connectHub();
 
+const bloom = new Bloom(renderer);
+bloom.strength = params.bloom;
 const stats = new Stats(renderer);
 const bench = new Bench();
 if (params.shot && (SHOT_NAMES as string[]).includes(params.shot)) { S.auto = false; cutTo(params.shot as ShotName); }
@@ -84,6 +87,8 @@ function resize(): void {
   renderer.setSize(innerWidth, innerHeight);
   camera.aspect = innerWidth / innerHeight;
   overlay.resize(innerWidth, innerHeight);
+  const db = renderer.getDrawingBufferSize(new THREE.Vector2());
+  bloom.setSize(db.x, db.y);
 }
 addEventListener('resize', resize);
 resize();
@@ -157,6 +162,8 @@ function frame(): void {
 
   stats.gpuBegin();
   renderer.render(scene, camera);
+  bloom.strength = params.bloom * S.ld.glow * (S.ld.blackout ? 0.3 : 1);
+  bloom.render(scene, camera);
   stats.gpuEnd();
 
   const cpu = performance.now() - now;

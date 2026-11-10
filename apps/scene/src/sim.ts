@@ -65,6 +65,7 @@ export const S = {
     lasers: 'auto' as 'auto' | 'on' | 'off',
     strobe: false,
     blackout: false,
+    glow: 1,
   },
   /** Camera operator: framing on top of every shot, and how often the auto-director cuts. */
   cam: { panX: 0, panY: 0, pace: 'normal' as 'slow' | 'normal' | 'fast' },

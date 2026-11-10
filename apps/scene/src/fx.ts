@@ -2,6 +2,7 @@
  * Effects: floating emotes, confetti, CO2 jets, pyro, lights-down dimming and
  * the sea of lighters/phones that comes up when the lights go down.
  */
+import { glows } from './bloom';
 import * as THREE from 'three';
 import type { Atlas } from '@bibos/bibo-art';
 import { EmoteSheet } from './emotes';
@@ -61,6 +62,7 @@ export class Fx {
     }));
     this.dim.frustumCulled = false;
     this.dim.renderOrder = 30;
+    glows(this.pGlow.mesh, this.pStreak.mesh, this.sGlow.mesh, this.sStreak.mesh);
     this.group.add(this.floatsB.mesh, this.twB.mesh, this.confettiB.mesh, this.pGlow.mesh, this.pStreak.mesh, this.pPuff.mesh, this.sGlow.mesh, this.sStreak.mesh, this.seaGlow.mesh, this.dim);
   }
 

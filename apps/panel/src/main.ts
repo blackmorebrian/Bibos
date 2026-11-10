@@ -18,7 +18,7 @@ const loginMsg = $('loginMsg'), dot = $('dot'), statusText = $('statusText');
 interface SceneState {
   look: string; colors: [string, string] | null; intensity: number; speed: number; lasers: string;
   strobe: boolean; blackout: boolean; lights: boolean; bpm: number; shot: string; auto: boolean; viewers: number;
-  helpUp?: boolean; helpEvery?: number; zoom?: number; pan?: number; height?: number; pace?: string; screens?: string; screenText?: string;
+  helpUp?: boolean; glow?: number; helpEvery?: number; zoom?: number; pan?: number; height?: number; pace?: string; screens?: string; screenText?: string;
 }
 let state: SceneState | null = null;
 let ws: WebSocket | null = null;
@@ -161,6 +161,7 @@ function slider(id: string, out: string, what: string, fmt: (v: number) => strin
   });
 }
 slider('intensity', 'intOut', 'intensity', (v) => `${Math.round(v * 100)}%`);
+slider('glow', 'glowOut', 'glow', (v) => `${Math.round(v * 100)}%`);
 slider('speed', 'spdOut', 'speed', (v) => `${v.toFixed(1)}×`);
 slider('zoom', 'zoomOut', 'zoom', (v) => `${v.toFixed(1)}×`);
 slider('pan', 'panOut', 'pan', (v) => String(v));
@@ -225,6 +226,7 @@ function render(): void {
     if (document.activeElement !== el) { el.value = String(v); $(out).textContent = fmt(v); }
   };
   setIf('intensity', 'intOut', s.intensity, (v) => `${Math.round(v * 100)}%`);
+  setIf('glow', 'glowOut', s.glow ?? 1, (v) => `${Math.round(v * 100)}%`);
   setIf('speed', 'spdOut', s.speed, (v) => `${v.toFixed(1)}×`);
   setIf('zoom', 'zoomOut', s.zoom ?? 1, (v) => `${v.toFixed(1)}×`);
   setIf('pan', 'panOut', s.pan ?? 0, (v) => String(v));

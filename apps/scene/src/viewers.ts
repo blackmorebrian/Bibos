@@ -174,11 +174,12 @@ export function applyCommand(what: string, arg: string, lag = 0): void {
       break;
     }
     case 'intensity': { const v = parseFloat(arg); if (v >= 0 && v <= 2) L.intensity = v; break; }
+    case 'glow': { const v = parseFloat(arg); if (v >= 0 && v <= 2) L.glow = v; break; }
     case 'speed': { const v = parseFloat(arg); if (v >= 0.1 && v <= 4) L.speed = v; break; }
     case 'lasers': if (['auto', 'on', 'off'].includes(arg)) L.lasers = arg as 'auto' | 'on' | 'off'; break;
     case 'strobe': L.strobe = onOff(arg, L.strobe); break;
     case 'blackout': L.blackout = onOff(arg, L.blackout); break;
-    case 'reset': Object.assign(L, { colors: null, intensity: 1, speed: 1, lasers: 'auto', strobe: false, blackout: false }); S.look = 'auto'; break;
+    case 'reset': Object.assign(L, { colors: null, intensity: 1, speed: 1, glow: 1, lasers: 'auto', strobe: false, blackout: false }); S.look = 'auto'; break;
     case 'drop': drop(); break;
     case 'lights':
       if (['down', 'off', 'dark'].includes(arg)) { if (!S.lights) toggleLights(); }

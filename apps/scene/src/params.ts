@@ -25,6 +25,8 @@ export const params = {
   aa: q.get('aa') !== '0',
   /** Render scale for the 3D layer (1 = native). */
   scale: num('scale', 1),
+  /** Light glow (bloom) strength; 0 turns it off for slow PCs. */
+  bloom: num('bloom', 0.8),
   /** Simulated chat speed 0..1. */
   chat: num('chat', 0.35),
   /** host:port of the stress server, needed when loaded from file://. */

@@ -9,6 +9,7 @@ import { S } from './sim';
 import { canvasTexture } from './sprites';
 import { params } from './params';
 import { IMAGES, textColumns } from './screens';
+import { glows } from './bloom';
 
 export const PALS = [['#ff3d81', '#19d3c5'], ['#ffc21a', '#7c5cff'], ['#19d3c5', '#ff7a2f'], ['#ff4fd8', '#ffe066']];
 const WHITE = new THREE.Color('#ffffff');
@@ -296,6 +297,7 @@ export class World {
     this.deckLeds = new THREE.InstancedMesh(new THREE.PlaneGeometry(2, 0.9), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }), 25);
     for (let i = 0; i < 25; i++) { this.deckLeds.setMatrixAt(i, new THREE.Matrix4().makeTranslation(-50 + i * 4 + 1, 0.85, -0.99)); this.deckLeds.setColorAt(i, new THREE.Color(PAPER)); }
     g.add(this.deckLeds);
+    glows(this.panelCells, this.rings, this.deckLeds);
 
     for (const x of [-46, 46]) {
       g.add(rect(x - 3, 1.7, x + 3, 14, -4, basic('#1c1266')));

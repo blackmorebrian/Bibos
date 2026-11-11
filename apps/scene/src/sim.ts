@@ -49,6 +49,8 @@ export const S = {
   meter: 0.3,
   mShow: 0.3,
   msgDebt: 0,
+  /** Demo mode from the desk (never saved: a reload ends it). fill = fake Bibos asked for, chat = fake chat level 0..1 (0 = off). */
+  demo: { fill: 0, chat: 0 },
   actDebt: 0,
   spam: null as null | { em: string; until: number },
   waveAt: -99,
@@ -188,6 +190,18 @@ function crowdChanged(): void {
 }
 
 /** A new Bibo in the next free spot (front rows fill first). */
+/** Demo crowd: make the number of fake (non-viewer) Bibos n. Real viewers are never removed. */
+export function setFiller(n: number): void {
+  n = Math.max(0, Math.min(2000, Math.floor(n)));
+  S.demo.fill = n;
+  let have = crowd.filter((b) => !b.viewer).length;
+  while (have < n) { appendBibo(); have++; }
+  for (let i = crowd.length - 1; i >= 0 && have > n; i--) {
+    const b = crowd[i];
+    if (b && !b.viewer) { removeBibo(b); have--; }
+  }
+}
+
 export function appendBibo(): Bibo {
   ensureSlots(crowd.length + 1);
   const a = makeBot(crowd.length, slots[crowd.length], S.t);
@@ -355,12 +369,16 @@ export function simTick(dt: number): void {
   const t = S.t, n = crowd.length;
   jetTick(t, dt);
   const spam = S.spam && t < S.spam.until;
-  if (!live) S.msgDebt += n * (0.35 * Math.pow(S.chat, 1.5) + (spam ? 0.75 : 0)) * dt;
+  // Fake chat: always offline; live only while the desk's demo chat is on.
+  const fake = !live || S.demo.chat > 0;
+  const rate = live ? S.demo.chat : S.chat;
+  if (fake) S.msgDebt += n * (0.35 * Math.pow(rate, 1.5) + (spam ? 0.75 : 0)) * dt;
   let guard = 0;
   if (!n) S.msgDebt = 0;
   while (S.msgDebt >= 1 && guard++ < 400) {
     S.msgDebt--;
     const a = crowd[Math.floor(rnd() * n)];
+    if (a.viewer) continue; // never put words in a real viewer's mouth
     const em = spam && rnd() < 0.85 ? S.spam!.em : rnd() < 0.62 ? pick(PLACEHOLDER_EMOTES) : null;
     chatMsg(a, em);
     if (em && rnd() < 0.35) {
@@ -372,7 +390,7 @@ export function simTick(dt: number): void {
   S.heat *= Math.exp(-dt / 6);
   let target: number, waveNeed: number;
   if (live && S.helpEvery > 0 && t - S.helpAt > S.helpEvery * 60) S.helpAt = t;
-  if (live) {
+  if (live && !fake) {
     // Relative to this channel's usual activity: ~normal chat sits around 0.4,
     // about double the usual rate pushes toward 1 and fills the meter.
     // Learns quickly in the first minutes after the source loads, then settles to a ~10 min average.

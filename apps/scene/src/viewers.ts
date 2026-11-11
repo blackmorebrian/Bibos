@@ -9,8 +9,7 @@ import {
 } from '@bibos/shared';
 import {
   S, crowd, emote, jetpack, addFloat, liveChat, joins, makeBot, rnd, SEA, clock, drop, toggleLights, appendBibo, removeBibo, pyro,
-  type Bibo, type ShotName,
-} from './sim';
+  type Bibo, type ShotName, setFiller } from './sim';
 import { autoCut, cutTo, SHOT_NAMES } from './camera';
 import { SCREEN_MODES } from './screens';
 import { MOTIONS, CHASES, STROBE_RATES } from './looks';
@@ -252,6 +251,13 @@ export function applyCommand(what: string, arg: string, lag = 0): void {
       if (arg === 'off' || arg === 'hide') { if (S.t - S.helpAt < HELP_SECONDS - 0.5) S.helpAt = S.t - HELP_SECONDS + 0.45; } // slide it away now
       else S.helpAt = S.t;
       break;
+    case 'demo': { // demo crowd size, or "demo chat 0.6" for fake chat (0 = off)
+      const [what, v] = arg.split(' ');
+      if (what === 'chat') { const c = parseFloat(v); if (c >= 0 && c <= 1) S.demo.chat = c; }
+      else if (what === 'off') { setFiller(0); S.demo.chat = 0; }
+      else { const k = parseInt(what, 10); if (k >= 0) setFiller(k); }
+      break;
+    }
     case 'helpevery': { const v = parseFloat(arg); if (v >= 0 && v <= 60) S.helpEvery = v; break; }
     case 'fire': case 'flames': pyro(arg === 'chase' ? 'chase' : 'fire'); break;
     case 'co2': case 'geyser': case 'smoke': pyro('co2'); break;

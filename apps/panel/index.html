@@ -276,6 +276,30 @@
         <button data-cmd="nudge" data-arg="50">50ms ▶</button>
       </div>
     </section>
+
+    <section class="panel cmds demo">
+      <details>
+        <summary><h2>Demo mode</h2><span>tap to open · for showing Bibos off</span></summary>
+        <p class="hint">Fills the crowd with fake Bibos and fake chat, so you can show people what a busy stream looks like. Real viewers who join take a fake Bibo's place. It switches off by itself when the crowd page reloads.</p>
+        <label class="slider">Fake crowd <output id="demoOut">0</output>
+          <input id="demoFill" type="range" min="0" max="2000" step="50" value="0"></label>
+        <div class="grid g5" data-group="demoFill">
+          <button data-cmd="demo" data-arg="0">None</button>
+          <button data-cmd="demo" data-arg="100">100</button>
+          <button data-cmd="demo" data-arg="500">500</button>
+          <button data-cmd="demo" data-arg="1000">1,000</button>
+          <button data-cmd="demo" data-arg="2000">2,000</button>
+        </div>
+        <span class="label">Fake chat:</span>
+        <div class="grid g4" data-group="demoChat">
+          <button data-cmd="demo" data-arg="chat 0">Off</button>
+          <button data-cmd="demo" data-arg="chat 0.3">Chill</button>
+          <button data-cmd="demo" data-arg="chat 0.6">Busy</button>
+          <button data-cmd="demo" data-arg="chat 1">Hype</button>
+        </div>
+        <button data-cmd="demo" data-arg="off" class="wide">End demo</button>
+      </details>
+    </section>
   </main>
   <script type="module" src="./src/main.ts"></script>
 </body>

@@ -22,7 +22,7 @@ interface SceneState {
   v?: number; id?: string; layout?: string;
   look: string; chase?: string; colors: [string, string] | null; intensity: number; speed: number; lasers: string;
   strobe: boolean; blackout: boolean; lights: boolean; bpm: number; shot: string; auto: boolean; viewers: number;
-  helpUp?: boolean; strobeRate?: number; glow?: number; helpEvery?: number; zoom?: number; pan?: number; height?: number; pace?: string; screens?: string; screenText?: string;
+  helpUp?: boolean; demoFill?: number; demoChat?: number; strobeRate?: number; glow?: number; helpEvery?: number; zoom?: number; pan?: number; height?: number; pace?: string; screens?: string; screenText?: string;
 }
 let state: SceneState | null = null;
 /** Every crowd that has reported lately (widescreen and vertical OBS sources). */
@@ -198,6 +198,7 @@ slider('speed', 'spdOut', 'speed', (v) => `${v.toFixed(1)}×`);
 slider('zoom', 'zoomOut', 'zoom', (v) => `${v.toFixed(1)}×`);
 slider('pan', 'panOut', 'pan', (v) => String(v));
 slider('height', 'heightOut', 'height', (v) => String(v));
+slider('demoFill', 'demoOut', 'demo', (v) => v.toLocaleString());
 
 $('focusForm').addEventListener('submit', (e) => {
   e.preventDefault();
@@ -249,6 +250,8 @@ function render(): void {
   mark('helpEvery', String(s.helpEvery ?? 10));
   $('helpShow').classList.toggle('on', !!s.helpUp);
   mark('screens', s.screens ?? 'auto');
+  mark('demoFill', String(s.demoFill ?? 0));
+  mark('demoChat', `chat ${s.demoChat ?? 0}`);
   const cur = s.colors ? s.colors.join(',').toLowerCase() : 'auto';
   sw.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.classList.toggle('on', b.dataset.colors === cur));
   document.querySelectorAll<HTMLButtonElement>('button[data-state]').forEach((b) => {
@@ -266,5 +269,6 @@ function render(): void {
   setIf('zoom', 'zoomOut', s.zoom ?? 1, (v) => `${v.toFixed(1)}×`);
   setIf('pan', 'panOut', s.pan ?? 0, (v) => String(v));
   setIf('height', 'heightOut', s.height ?? 0, (v) => String(v));
+  setIf('demoFill', 'demoOut', s.demoFill ?? 0, (v) => v.toLocaleString());
   $('bpm').textContent = String(Math.round(s.bpm));
 }

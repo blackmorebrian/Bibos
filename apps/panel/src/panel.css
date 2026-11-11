@@ -121,3 +121,7 @@ button.flash { animation: flash 0.35s; }
   .cmds dl { grid-template-columns: 1fr; gap: 2px; }
   .cmds dd { margin-bottom: 8px; }
 }
+
+/* Demo mode fold-out */
+.demo details[open] { display: grid; gap: 12px; }
+.demo .label { text-align: left; }

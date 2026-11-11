@@ -220,7 +220,7 @@ export class Overlay {
       return X + w;
     };
     // Live, only real viewers count.
-    const n = live ? joinedCount() : crowd.length;
+    const n = live && !S.demo.fill ? joinedCount() : crowd.length;
     const label = n === 0 ? 'BE THE FIRST IN THE CROWD' : `${n} BIBO${n === 1 ? '' : 'S'} IN THE CROWD`;
     this.tagRight = tag(label, m, this.safe.top, PAPER, INK, 28 * k);
     const alt = live && Math.floor(S.t / 8) % 2 === 1;

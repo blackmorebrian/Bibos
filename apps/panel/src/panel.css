@@ -137,7 +137,15 @@ button.flash { animation: flash 0.35s; }
 /* Keyboard shortcuts list */
 .keys { background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 16px; padding: 22px; max-width: 520px; width: calc(100% - 32px); }
 .keys::backdrop { background: rgba(8, 4, 30, 0.7); }
-.keys dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 14px 0 18px; font-size: 15px; }
+.keys dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 6px 0 14px; font-size: 15px; }
+.keys h3 { font: 800 13px Figtree, system-ui, sans-serif; color: var(--gold); text-transform: uppercase; letter-spacing: 0.5px; margin: 14px 0 4px; }
+.keys { max-height: 86vh; }
 .keys dt { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; }
 .keys dt i { color: var(--dim); font-style: normal; font-weight: 600; }
 .keys dd { margin: 0; color: var(--dim); }
+
+/* Key badge in the corner of each button (keyboards only) */
+button { position: relative; }
+kbd.key { position: absolute; top: 3px; right: 5px; font: 700 10px ui-monospace, Menlo, Consolas, monospace; color: var(--dim); opacity: 0.8; pointer-events: none; }
+button.on kbd.key, .hold.held kbd.key { color: inherit; }
+@media (hover: none), (pointer: coarse) { kbd.key { display: none; } }

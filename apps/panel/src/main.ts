@@ -258,7 +258,11 @@ function render(): void {
   document.querySelectorAll<HTMLButtonElement>('button[data-state]').forEach((b) => {
     const on = !!s[b.dataset.state as 'lights' | 'strobe' | 'blackout'];
     b.setAttribute('aria-pressed', String(on));
-    if (b.dataset.state === 'lights') b.textContent = on ? '☀️ Lights up' : '🌙 Lights down';
+    if (b.dataset.state === 'lights') {
+      const kb = b.querySelector('kbd.key'); // keep the key badge when the label changes
+      b.textContent = on ? '☀️ Lights up' : '🌙 Lights down';
+      if (kb) b.append(kb);
+    }
   });
   const setIf = (id: string, out: string, v: number, fmt: (v: number) => string) => {
     const el = $<HTMLInputElement>(id);
@@ -304,39 +308,142 @@ document.querySelectorAll<HTMLButtonElement>('button[data-hold]').forEach((b) =>
 });
 
 /* ---------- keyboard shortcuts ---------- */
-const keysDlg = $<HTMLDialogElement>('keys');
-$('keysBtn').addEventListener('click', () => keysDlg.showModal());
-const HOLD_KEYS: Record<string, string> = { Space: 'blinder', KeyZ: 'strobe', KeyX: 'blackout', KeyV: 'lasers' };
-const MOVE_KEYS = ['fan', 'cross', 'wave', 'sweep', 'circle', 'ballyhoo', 'snap', 'tilt'];
-const CHASE_KEYS = ['none', 'chase', 'bounce', 'center', 'random', 'pulse'];
-const LETTER_KEYS: Record<string, string> = {
-  KeyS: 'button[data-state="strobe"]', KeyB: 'button[data-state="blackout"]', KeyL: 'button[data-state="lights"]',
-  KeyD: 'button[data-cmd="drop"]', KeyH: 'button[data-cmd="hype"]', KeyC: 'button[data-cmd="cut"]', KeyT: '#tap',
+// One table drives everything: the key handling, the little key badge on each
+// button, and the list in the Keys window. Live controls use plain keys and
+// Shift; set-and-forget sections (side screens, auto-show card, demo) use Alt
+// (Option on a Mac). Alt+D, Alt+E and Alt+F are left alone: Chrome uses them.
+type Mod = '' | 'shift' | 'alt';
+interface Key { code: string; mod: Mod; sel: string; what: string; hold?: string }
+const SECTIONS: [string, Key[]][] = [];
+const k = (code: string, mod: Mod, sel: string, what: string, hold?: string): Key => ({ code, mod, sel, what, hold });
+const btn = (group: string, arg: string) => `[data-group="${group}"] button[data-arg="${arg}"]`;
+const cmd = (c: string, arg?: string) => (arg === undefined ? `button[data-cmd="${c}"]:not([data-arg])` : `button[data-cmd="${c}"][data-arg="${arg}"]`);
+const D = (n: number | string) => `Digit${n}`, K = (l: string) => `Key${l}`;
+
+SECTIONS.push(['Hold to flash', [
+  k('Space', '', '[data-hold="blinder"]', 'Blinder', 'blinder'),
+  k(K('Z'), '', '[data-hold="strobe"]', 'Strobe while held', 'strobe'),
+  k(K('X'), '', '[data-hold="blackout"]', 'Blackout while held', 'blackout'),
+  k(K('V'), '', '[data-hold="lasers"]', 'Lasers while held', 'lasers'),
+]]);
+SECTIONS.push(['Show', [
+  k(K('D'), '', cmd('drop'), 'Drop'), k(K('H'), '', cmd('hype'), 'Hype finale'), k(K('L'), '', 'button[data-state="lights"]', 'Lights down / up'),
+  k('Period', '', '#helpShow', 'Show commands card'), k('Slash', '', cmd('help', 'off'), 'Hide card'),
+]]);
+const MOVES: [string, string][] = [['fan', 'Fan'], ['cross', 'Cross'], ['wave', 'Wave'], ['sweep', 'Sweep'], ['circle', 'Circles'], ['ballyhoo', 'Ballyhoo'], ['snap', 'Snap'], ['tilt', 'Tilt hits']];
+const CHASES: [string, string][] = [['none', 'All on'], ['chase', 'Left → right'], ['bounce', 'Bounce'], ['center', 'Center out'], ['random', 'Random'], ['pulse', 'Pulse']];
+SECTIONS.push(['Looks', [
+  ...MOVES.map(([a, w], i) => k(D(i + 1), '', btn('look', a), `Movement: ${w}`)),
+  k(D(9), '', btn('look', 'auto'), 'Movement: Auto'),
+  ...CHASES.map(([a, w], i) => k(D(i + 1), 'shift', btn('chase', a), `Chase: ${w}`)),
+  k(D(9), 'shift', btn('chase', 'auto'), 'Chase: Auto'),
+  k(D(0), '', '#allAuto', 'Movement and chase both Auto'),
+]]);
+const COLOR_KEYS = ['Q', 'W', 'E', 'R', 'Y', 'U', 'I', 'O', 'P'].map(K).concat('BracketLeft');
+SECTIONS.push(['Colors', COLOR_KEYS.map((code, i) => k(code, '', `#swatches button:nth-child(${i + 1})`, i === 0 ? 'Colors: Auto' : `Colors: ${SWATCHES[i - 1][0]}`))]);
+SECTIONS.push(['Rig', [
+  k(K('S'), '', 'button[data-state="strobe"]', 'Strobe on / off'), k(K('B'), '', 'button[data-state="blackout"]', 'Blackout on / off'),
+  k(D(0), 'shift', cmd('reset'), 'Reset rig'),
+  ...[['0.5', 'Slow'], ['1', 'Beat'], ['2', 'Fast'], ['4', 'Faster']].map(([a, w], i) => k(K('QWER'[i]), 'shift', btn('strobeRate', a), `Strobe speed: ${w}`)),
+]]);
+SECTIONS.push(['Lasers', [
+  k(K('N'), '', btn('lasers', 'auto'), 'Lasers: Auto'), k(K('M'), '', btn('lasers', 'on'), 'Lasers: On'), k('Comma', '', btn('lasers', 'off'), 'Lasers: Off'),
+  ...[['auto', 'Auto'], ['fan', 'Fan'], ['grid', 'Grid'], ['liquid', 'Liquid sky'], ['tunnel', 'Tunnel']].map(([a, w], i) => k(K('YUIOP'[i]), 'shift', btn('laserLook', a), `Laser look: ${w}`)),
+]]);
+SECTIONS.push(['Pyro', [
+  k(K('F'), '', cmd('fire'), 'Flames'), k(K('G'), '', cmd('fire', 'chase'), 'Flame chase'), k(K('J'), '', cmd('co2'), 'CO2'),
+  k(K('K'), '', cmd('sparks'), 'Sparks'), k('Semicolon', '', cmd('falls'), 'Waterfall'), k('Quote', '', cmd('fireworks', '8'), 'Fireworks'),
+  k(K('A'), '', cmd('pyro'), 'Everything'),
+]]);
+SECTIONS.push(['Camera', [
+  k(K('C'), '', cmd('cut'), 'Next shot'),
+  ...[['auto', 'Auto'], ['wide', 'Wide'], ['sweep', 'Sweep'], ['over', 'Over'], ['close', 'Close-up'], ['back', 'Stage']].map(([a, w], i) => k(K('ASDFGH'[i]), 'shift', btn('shot', a), `Shot: ${w}`)),
+  ...[['slow', 'Slow'], ['normal', 'Normal'], ['fast', 'Fast']].map(([a, w], i) => k(K('JKL'[i]), 'shift', btn('pace', a), `Pace: ${w}`)),
+  k('Semicolon', 'shift', cmd('frame'), 'Reset framing'), k('Quote', 'shift', cmd('shake'), 'Camera shake'),
+]]);
+SECTIONS.push(['Tempo', [
+  k(K('T'), '', '#tap', 'Tap tempo'), k(K('T'), 'shift', cmd('beat'), 'Sync on 1'),
+  k('ArrowLeft', '', cmd('nudge', '-10'), 'Nudge beat 10ms earlier'), k('ArrowRight', '', cmd('nudge', '10'), 'Nudge beat 10ms later'),
+  k('ArrowLeft', 'shift', cmd('nudge', '-50'), 'Nudge beat 50ms earlier'), k('ArrowRight', 'shift', cmd('nudge', '50'), 'Nudge beat 50ms later'),
+]]);
+SECTIONS.push(['Side screens', [
+  k(K('P'), 'alt', btn('screens', 'chat'), 'Twitch chat'),
+  ...[['auto', 'Auto'], ['meter', 'Meter'], ['stripes', 'Stripes'], ['checker', 'Checker'], ['ripple', 'Ripple'], ['solid', 'Solid'], ['off', 'Off'], ['text', 'Text']]
+    .map(([a, w], i) => k(K('QWRTYUIO'[i]), 'alt', btn('screens', a), `Screens: ${w}`)),
+  ...[['heart', 'Heart'], ['star', 'Star'], ['smile', 'Smile'], ['note', 'Music'], ['bolt', 'Bolt'], ['fire', 'Fire'], ['arrow', 'Arrow'], ['diamond', 'Diamond']]
+    .map(([a, w], i) => k(D(i + 1), 'alt', btn('screens', a), `Picture: ${w}`)),
+]]);
+SECTIONS.push(['Commands card', [
+  ...[['0', 'Never'], ['5', '5 min'], ['10', '10 min'], ['15', '15 min']].map(([a, w], i) => k(K('GHJK'[i]), 'alt', btn('helpEvery', a), `Auto-show card: ${w}`)),
+]]);
+SECTIONS.push(['Demo mode', [
+  ...[['0', 'None'], ['100', '100'], ['500', '500'], ['1000', '1,000'], ['2000', '2,000']].map(([a, w], i) => k(K('ZXCVB'[i]), 'alt', btn('demoFill', a), `Fake crowd: ${w}`)),
+  ...[['chat 0', 'Off'], ['chat 0.3', 'Chill'], ['chat 0.6', 'Busy'], ['chat 1', 'Hype']].map(([a, w], i) => k(i < 2 ? K('NM'[i]) : ['Comma', 'Period'][i - 2], 'alt', btn('demoChat', a), `Fake chat: ${w}`)),
+  k('Slash', 'alt', '.demo button.wide', 'End demo'),
+]]);
+const KEYS = SECTIONS.flatMap(([, ks]) => ks);
+
+const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+const KEY_NAMES: Record<string, string> = {
+  Space: 'Space', Period: '.', Slash: '/', Comma: ',', Semicolon: ';', Quote: "'", BracketLeft: '[', ArrowLeft: '←', ArrowRight: '→',
 };
+const keyName = (code: string) => KEY_NAMES[code] ?? code.replace(/^Key|^Digit/, '');
+const label = (x: Key) => (x.mod === 'shift' ? '⇧' : x.mod === 'alt' ? (isMac ? '⌥' : 'Alt+') : '') + keyName(x.code);
+
+// The "0" key: movement and chase both back to Auto (a hidden button so it flashes like the rest).
+const allAuto = document.createElement('button');
+allAuto.id = 'allAuto'; allAuto.dataset.cmd = 'look'; allAuto.dataset.arg = 'auto'; allAuto.hidden = true;
+allAuto.addEventListener('click', () => send('look', 'auto'));
+document.body.appendChild(allAuto);
+
+// Key badges on the buttons (hidden on touch screens, see panel.css).
+for (const x of KEYS) {
+  document.querySelectorAll<HTMLElement>(x.sel).forEach((b) => {
+    if (b.id === 'allAuto') return;
+    let kb = b.querySelector('kbd.key');
+    if (!kb) { kb = document.createElement('kbd'); kb.className = 'key'; kb.setAttribute('aria-hidden', 'true'); b.appendChild(kb); }
+    kb.textContent = label(x);
+    b.setAttribute('aria-keyshortcuts', (x.mod === 'shift' ? 'Shift+' : x.mod === 'alt' ? 'Alt+' : '') + (x.code === 'Space' ? 'Space' : keyName(x.code)));
+  });
+}
+
+// The Keys window, built from the same table.
+const keysDlg = $<HTMLDialogElement>('keys');
+const list = $('keysList');
+for (const [name, ks] of SECTIONS) {
+  const h = document.createElement('h3');
+  h.textContent = name;
+  const dl = document.createElement('dl');
+  for (const x of ks) {
+    const dt = document.createElement('dt'), dd = document.createElement('dd');
+    dt.textContent = label(x) + (x.hold ? ' (hold)' : '');
+    dd.textContent = x.what;
+    dl.append(dt, dd);
+  }
+  list.append(h, dl);
+}
+/** Open the Keys window at the top (it would otherwise scroll down to its Close button). */
+const showKeys = () => { keysDlg.showModal(); keysDlg.scrollTop = 0; };
+$('keysBtn').addEventListener('click', showKeys);
+
 const press = (sel: string) => { document.querySelector<HTMLButtonElement>(sel)?.click(); };
 const typing = (t: EventTarget | null) =>
   t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) && (t as HTMLInputElement).type !== 'range');
+const HOLD_CODES = new Map(KEYS.filter((x) => x.hold).map((x) => [x.code, x.hold!]));
 
 addEventListener('keydown', (e) => {
-  if (deskEl.hidden || keysDlg.open || typing(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
-  const hold = HOLD_KEYS[e.code];
-  if (hold) { e.preventDefault(); if (!e.repeat) holdStart(hold); return; }
-  if (e.repeat) return;
-  if (e.key === '?') { e.preventDefault(); keysDlg.showModal(); return; }
-  const digit = /^Digit(\d)$/.exec(e.code)?.[1];
-  if (digit !== undefined) {
-    const n = Number(digit);
-    if (n === 0) { press('[data-group="look"] button[data-arg="auto"]'); press('[data-group="chase"] button[data-arg="auto"]'); }
-    else if (e.shiftKey) { if (CHASE_KEYS[n - 1]) press(`[data-group="chase"] button[data-arg="${CHASE_KEYS[n - 1]}"]`); }
-    else if (MOVE_KEYS[n - 1]) press(`[data-group="look"] button[data-arg="${MOVE_KEYS[n - 1]}"]`);
-    e.preventDefault();
-    return;
-  }
-  const sel = LETTER_KEYS[e.code];
-  if (sel && !e.shiftKey) { e.preventDefault(); press(sel); }
+  if (deskEl.hidden || keysDlg.open || typing(e.target) || e.metaKey || e.ctrlKey) return;
+  const mod: Mod = e.altKey ? 'alt' : e.shiftKey ? 'shift' : '';
+  if (mod === '' && HOLD_CODES.has(e.code)) { e.preventDefault(); if (!e.repeat) holdStart(HOLD_CODES.get(e.code)!); return; }
+  if (e.code === 'Slash' && e.shiftKey && !e.altKey) { e.preventDefault(); showKeys(); return; } // "?"
+  const x = KEYS.find((q) => q.code === e.code && q.mod === mod && !q.hold);
+  if (!x) return;
+  if (e.code.startsWith('Arrow') && e.target instanceof HTMLInputElement) return; // arrows still fine-tune a focused slider
+  e.preventDefault();
+  if (!e.repeat) press(x.sel);
 });
 addEventListener('keyup', (e) => {
-  const hold = HOLD_KEYS[e.code];
+  const hold = HOLD_CODES.get(e.code);
   if (!hold) return;
   holdEnd(hold);
   if (!typing(e.target)) e.preventDefault(); // Space mustn't also "click" whatever button has focus

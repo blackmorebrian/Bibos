@@ -53,7 +53,7 @@ export const S = {
   demo: { fill: 0, chat: 0 },
   /** Hold (flash) buttons on the desk: each stays on until this time (seconds, performance clock).
       The desk re-sends while the button is held, so a lost "let go" can't leave it stuck on. */
-  hold: { blinder: 0, strobe: 0, blackout: 0 } as Record<'blinder' | 'strobe' | 'blackout', number>,
+  hold: { blinder: 0, strobe: 0, blackout: 0, lasers: 0 } as Record<HoldName, number>,
   /** Blinder level 0..1 (snaps on, fades off like hot bulbs). */
   blind: 0,
   actDebt: 0,
@@ -73,6 +73,8 @@ export const S = {
     intensity: 1,
     speed: 1,
     lasers: 'auto' as 'auto' | 'on' | 'off',
+    /** Laser look: 'auto' or one of LASER_LOOKS (fan, grid, liquid, tunnel). */
+    laserLook: 'auto' as string,
     strobe: false,
     /** Strobe flashes per beat: 0.5, 1, 2 or 4. */
     strobeRate: 1,
@@ -467,8 +469,9 @@ export function activeChase(bar: number): string {
 }
 
 /* ---------- hold (flash) buttons ---------- */
+export type HoldName = 'blinder' | 'strobe' | 'blackout' | 'lasers';
 export const HOLD_SECONDS = 1.2;
-export const held = (k: 'blinder' | 'strobe' | 'blackout') => S.hold[k] > performance.now() / 1000;
+export const held = (k: HoldName) => S.hold[k] > performance.now() / 1000;
 /** Strobe on: latched on the desk, or a strobe button being held. */
 export const isStrobe = () => S.ld.strobe || held('strobe');
 /** Blackout on: latched, or held. */

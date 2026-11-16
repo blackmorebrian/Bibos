@@ -13,6 +13,7 @@ import {
 import { autoCut, cutTo, SHOT_NAMES } from './camera';
 import { SCREEN_MODES } from './screens';
 import { MOTIONS, CHASES, STROBE_RATES } from './looks';
+import { LASER_LOOKS } from './lasers';
 import { params } from './params';
 import type { ChatMessage } from './twitch';
 
@@ -175,7 +176,14 @@ export function applyCommand(what: string, arg: string, lag = 0): void {
     case 'intensity': { const v = parseFloat(arg); if (v >= 0 && v <= 2) L.intensity = v; break; }
     case 'glow': { const v = parseFloat(arg); if (v >= 0 && v <= 2) L.glow = v; break; }
     case 'speed': { const v = parseFloat(arg); if (v >= 0.1 && v <= 4) L.speed = v; break; }
-    case 'lasers': if (['auto', 'on', 'off'].includes(arg)) L.lasers = arg as 'auto' | 'on' | 'off'; break;
+    case 'lasers': // on / off / auto, or a look name (which also switches them on)
+      if (['auto', 'on', 'off'].includes(arg)) L.lasers = arg as 'auto' | 'on' | 'off';
+      else if (LASER_LOOKS.includes(arg)) { L.laserLook = arg; L.lasers = 'on'; }
+      break;
+    case 'laserlook': // a look switches the lasers on; auto just goes back to the auto show's choice
+      if (arg === 'auto') L.laserLook = 'auto';
+      else if (LASER_LOOKS.includes(arg)) { L.laserLook = arg; L.lasers = 'on'; }
+      break;
     case 'strobe': {
       // "!dj strobe 2" = on at 2 flashes per beat; on/off/toggle otherwise.
       const r = parseFloat(arg);
@@ -186,11 +194,11 @@ export function applyCommand(what: string, arg: string, lag = 0): void {
     case 'blackout': L.blackout = onOff(arg, L.blackout); break;
     case 'hold': { // desk hold buttons: "hold blinder" (re-sent while held), "hold blinder off"
       const [what, off] = arg.split(' ');
-      if (what === 'blinder' || what === 'strobe' || what === 'blackout') S.hold[what] = off === 'off' ? 0 : performance.now() / 1000 + HOLD_SECONDS;
+      if (what === 'blinder' || what === 'strobe' || what === 'blackout' || what === 'lasers') S.hold[what] = off === 'off' ? 0 : performance.now() / 1000 + HOLD_SECONDS;
       break;
     }
     case 'blinder': S.hold.blinder = ['off', '0'].includes(arg) ? 0 : performance.now() / 1000 + Math.min(5, parseFloat(arg) || 0.6); break;
-    case 'reset': Object.assign(L, { colors: null, intensity: 1, speed: 1, glow: 1, strobeRate: 1, lasers: 'auto', strobe: false, blackout: false }); S.look = 'auto'; S.chase = 'auto'; break;
+    case 'reset': Object.assign(L, { colors: null, intensity: 1, speed: 1, glow: 1, strobeRate: 1, lasers: 'auto', laserLook: 'auto', strobe: false, blackout: false }); S.look = 'auto'; S.chase = 'auto'; break;
     case 'drop': drop(); break;
     case 'lights':
       if (['down', 'off', 'dark'].includes(arg)) { if (!S.lights) toggleLights(); }

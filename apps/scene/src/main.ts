@@ -175,7 +175,7 @@ function frame(): void {
 
   stats.gpuBegin();
   renderer.render(scene, camera);
-  bloom.strength = params.bloom * S.ld.glow * (isBlackout() && S.blind < 0.05 ? 0.3 : 1);
+  bloom.strength = params.bloom * S.ld.glow * (isBlackout() && S.blind < 0.05 && S.ld.lasers !== 'on' && S.hold.lasers < performance.now() / 1000 ? 0.3 : 1);
   bloom.render(scene, camera);
   stats.gpuEnd();
 

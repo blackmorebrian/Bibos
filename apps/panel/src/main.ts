@@ -20,7 +20,7 @@ const CROWD_VERSION = 3;
 
 interface SceneState {
   v?: number; id?: string; layout?: string;
-  look: string; chase?: string; colors: [string, string] | null; intensity: number; speed: number; lasers: string;
+  look: string; chase?: string; colors: [string, string] | null; intensity: number; speed: number; lasers: string; laserLook?: string;
   strobe: boolean; blackout: boolean; lights: boolean; bpm: number; shot: string; auto: boolean; viewers: number;
   helpUp?: boolean; demoFill?: number; demoChat?: number; strobeRate?: number; glow?: number; helpEvery?: number; zoom?: number; pan?: number; height?: number; pace?: string; screens?: string; screenText?: string;
 }
@@ -244,6 +244,7 @@ function render(): void {
   mark('look', s.look);
   mark('chase', s.chase ?? 'auto');
   mark('lasers', s.lasers);
+  mark('laserLook', s.laserLook ?? 'auto');
   mark('shot', s.auto ? 'auto' : s.shot);
   mark('pace', s.pace ?? 'normal');
   mark('strobeRate', String(s.strobeRate ?? 1));
@@ -305,7 +306,7 @@ document.querySelectorAll<HTMLButtonElement>('button[data-hold]').forEach((b) =>
 /* ---------- keyboard shortcuts ---------- */
 const keysDlg = $<HTMLDialogElement>('keys');
 $('keysBtn').addEventListener('click', () => keysDlg.showModal());
-const HOLD_KEYS: Record<string, string> = { Space: 'blinder', KeyZ: 'strobe', KeyX: 'blackout' };
+const HOLD_KEYS: Record<string, string> = { Space: 'blinder', KeyZ: 'strobe', KeyX: 'blackout', KeyV: 'lasers' };
 const MOVE_KEYS = ['fan', 'cross', 'wave', 'sweep', 'circle', 'ballyhoo', 'snap', 'tilt'];
 const CHASE_KEYS = ['none', 'chase', 'bounce', 'center', 'random', 'pulse'];
 const LETTER_KEYS: Record<string, string> = {

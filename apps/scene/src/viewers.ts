@@ -9,7 +9,7 @@ import {
 } from '@bibos/shared';
 import {
   S, crowd, emote, jetpack, addFloat, liveChat, joins, makeBot, rnd, SEA, clock, drop, toggleLights, appendBibo, removeBibo, pyro,
-  type Bibo, type ShotName, setFiller } from './sim';
+  type Bibo, type ShotName, setFiller, HOLD_SECONDS } from './sim';
 import { autoCut, cutTo, SHOT_NAMES } from './camera';
 import { SCREEN_MODES } from './screens';
 import { MOTIONS, CHASES, STROBE_RATES } from './looks';
@@ -184,6 +184,12 @@ export function applyCommand(what: string, arg: string, lag = 0): void {
     }
     case 'strobespeed': { const r = parseFloat(arg); if (STROBE_RATES.includes(r)) L.strobeRate = r; break; }
     case 'blackout': L.blackout = onOff(arg, L.blackout); break;
+    case 'hold': { // desk hold buttons: "hold blinder" (re-sent while held), "hold blinder off"
+      const [what, off] = arg.split(' ');
+      if (what === 'blinder' || what === 'strobe' || what === 'blackout') S.hold[what] = off === 'off' ? 0 : performance.now() / 1000 + HOLD_SECONDS;
+      break;
+    }
+    case 'blinder': S.hold.blinder = ['off', '0'].includes(arg) ? 0 : performance.now() / 1000 + Math.min(5, parseFloat(arg) || 0.6); break;
     case 'reset': Object.assign(L, { colors: null, intensity: 1, speed: 1, glow: 1, strobeRate: 1, lasers: 'auto', strobe: false, blackout: false }); S.look = 'auto'; S.chase = 'auto'; break;
     case 'drop': drop(); break;
     case 'lights':

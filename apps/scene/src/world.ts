@@ -5,7 +5,7 @@
  */
 import * as THREE from 'three';
 import { mulberry } from '@bibos/shared';
-import { S, activeLook, activeChase, reduceMotion } from './sim';
+import { S, activeLook, activeChase, reduceMotion, isStrobe, isBlackout } from './sim';
 import { canvasTexture } from './sprites';
 import { params } from './params';
 import { IMAGES, textColumns } from './screens';
@@ -366,7 +366,7 @@ export class World {
     // Chat mode swaps the pixel screens for the chat walls (blackout takes them dark too).
     const chatOn = S.screens.mode === 'chat';
     this.panelCells.visible = !chatOn;
-    for (const m of this.chatScreens) m.visible = chatOn && !S.ld.blackout;
+    for (const m of this.chatScreens) m.visible = chatOn && !isBlackout();
     for (const m of this.chatBright) m.visible = chatOn && S.dim > 0.01;
 
     const bar = Math.floor(beat / 4), ph = ((beat % 1) + 1) % 1, kick = Math.pow(1 - ph, 3);
@@ -393,7 +393,7 @@ export class World {
       for (let r = 0; r < 8; r++) {
         const y = 7 - r; // row counted from the top
         let on: string | null;
-        if (scr === 'off' || S.ld.blackout) on = null; // blackout takes the pixel screens dark too
+        if (scr === 'off' || isBlackout()) on = null; // blackout takes the pixel screens dark too
         else if (scr === 'solid') on = two[0];
         else if (img) { const ch = img[y][x]; on = ch === '#' ? two[0] : ch === '+' ? two[1] : null; }
         else if (cols) on = y < 7 && (cols[(scroll + x) % cols.length] >> y) & 1 ? two[0] : null;
@@ -419,8 +419,8 @@ export class World {
     // The LEDs follow the chase; with no chase they follow the motion's own pattern.
     const L = S.ld, chase = activeChase(bar), look = chase === 'none' ? activeLook(bar) : chase;
     const [cA, cB] = L.colors ?? pal;
-    const strobing = L.strobe && !reduceMotion;
-    const power = L.blackout ? 0 : Math.min(1.2, L.intensity) * (1 - S.dim * 0.6);
+    const strobing = isStrobe() && !reduceMotion;
+    const power = isBlackout() ? 0 : Math.min(1.2, L.intensity) * (1 - S.dim * 0.6);
     const lit = (on: string, level: number, off: string) => {
       const v = clamp01(level) * power;
       col.set(off).lerp(this.tmpColor2.set(on), Math.min(1, v));

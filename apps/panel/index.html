@@ -55,6 +55,7 @@
           <dt>!dj speed 2</dt><dd>Light movement speed, 0.1 to 4</dd>
           <dt>!dj lasers on</dt><dd>on, off or auto</dd>
           <dt>!dj strobe on / off</dt><dd>Strobe on the beams and stage LEDs</dd>
+          <dt>!dj blinder</dt><dd>Quick blinder flash (or <code>!dj blinder 2</code> for 2 seconds, up to 5)</dd>
           <dt>!dj strobe 2</dt><dd>Strobe on at a speed: 0.5 (slow), 1 (every beat), 2 (fast), 4 (faster)</dd>
           <dt>!dj blackout on / off</dt><dd>All lights off</dd>
           <dt>!dj reset</dt><dd>Lights back to normal</dd>
@@ -90,6 +91,7 @@
     <header>
       <h1>BIBOS <span>LIGHT DESK</span></h1>
       <div class="status"><span id="dot" class="dot"></span><span id="statusText">Connecting…</span></div>
+      <button id="keysBtn" class="ghost" aria-haspopup="dialog">⌨️ Keys</button>
       <button id="logout" class="ghost">Lock</button>
     </header>
 
@@ -99,6 +101,12 @@
         <button class="big hot" data-cmd="drop">💥 Drop</button>
         <button class="big" data-cmd="hype">🔥 Hype finale</button>
         <button class="big toggle" data-cmd="lights" data-state="lights">🌙 Lights down</button>
+      </div>
+      <h3 class="sub">Hold to flash <small>· on while held, off when you let go</small></h3>
+      <div class="grid g3">
+        <button class="big hold blinder" data-hold="blinder" title="Hold (key: Space)">✨ Blinder</button>
+        <button class="big hold" data-hold="strobe" title="Hold (key: Z)">⚡ Strobe</button>
+        <button class="big hold" data-hold="blackout" title="Hold (key: X)">⬛ Blackout</button>
       </div>
       <div class="grid g2">
         <button data-cmd="help" id="helpShow">📋 Show commands card</button>
@@ -301,6 +309,27 @@
       </details>
     </section>
   </main>
+  <dialog id="keys" class="keys">
+    <h2>Keyboard shortcuts</h2>
+    <p class="hint">Work whenever the desk is open and you're not typing in a box.</p>
+    <dl>
+      <dt>Space <i>(hold)</i></dt><dd>Blinder</dd>
+      <dt>Z <i>(hold)</i></dt><dd>Strobe while held</dd>
+      <dt>X <i>(hold)</i></dt><dd>Blackout while held</dd>
+      <dt>S</dt><dd>Strobe on / off</dd>
+      <dt>B</dt><dd>Blackout on / off</dd>
+      <dt>L</dt><dd>Lights down / up</dd>
+      <dt>D</dt><dd>Drop</dd>
+      <dt>H</dt><dd>Hype finale</dd>
+      <dt>1 – 8</dt><dd>Movement: Fan, Cross, Wave, Sweep, Circles, Ballyhoo, Snap, Tilt hits</dd>
+      <dt>Shift + 1 – 6</dt><dd>Chase: All on, Left → right, Bounce, Center out, Random, Pulse</dd>
+      <dt>0</dt><dd>Movement and chase back to Auto</dd>
+      <dt>C</dt><dd>Next camera shot</dd>
+      <dt>T</dt><dd>Tap tempo</dd>
+      <dt>?</dt><dd>Show this list</dd>
+    </dl>
+    <form method="dialog"><button class="wide">Close</button></form>
+  </dialog>
   <script type="module" src="./src/main.ts"></script>
 </body>
 </html>

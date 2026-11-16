@@ -272,3 +272,71 @@ function render(): void {
   setIf('demoFill', 'demoOut', s.demoFill ?? 0, (v) => v.toLocaleString());
   $('bpm').textContent = String(Math.round(s.bpm));
 }
+
+/* ---------- hold (flash) buttons: on while held, off when you let go ---------- */
+// The desk re-sends "hold" every 400 ms while held; the crowd lets go by itself
+// 1.2 s after the last one, so a dropped connection can't leave a flash stuck on.
+const holding = new Map<string, number>();
+function holdStart(what: string): void {
+  if (holding.has(what)) return;
+  send('hold', what);
+  holding.set(what, window.setInterval(() => send('hold', what), 400));
+  document.querySelectorAll(`[data-hold="${what}"]`).forEach((b) => b.classList.add('held'));
+}
+function holdEnd(what: string): void {
+  const iv = holding.get(what);
+  if (iv === undefined) return;
+  clearInterval(iv);
+  holding.delete(what);
+  send('hold', `${what} off`);
+  document.querySelectorAll(`[data-hold="${what}"]`).forEach((b) => b.classList.remove('held'));
+}
+const releaseAll = () => { for (const w of [...holding.keys()]) holdEnd(w); };
+addEventListener('blur', releaseAll);
+document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); });
+
+document.querySelectorAll<HTMLButtonElement>('button[data-hold]').forEach((b) => {
+  const what = b.dataset.hold!;
+  b.addEventListener('pointerdown', (e) => { e.preventDefault(); b.setPointerCapture(e.pointerId); holdStart(what); });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, () => holdEnd(what));
+  b.addEventListener('contextmenu', (e) => e.preventDefault()); // long-press on phones
+});
+
+/* ---------- keyboard shortcuts ---------- */
+const keysDlg = $<HTMLDialogElement>('keys');
+$('keysBtn').addEventListener('click', () => keysDlg.showModal());
+const HOLD_KEYS: Record<string, string> = { Space: 'blinder', KeyZ: 'strobe', KeyX: 'blackout' };
+const MOVE_KEYS = ['fan', 'cross', 'wave', 'sweep', 'circle', 'ballyhoo', 'snap', 'tilt'];
+const CHASE_KEYS = ['none', 'chase', 'bounce', 'center', 'random', 'pulse'];
+const LETTER_KEYS: Record<string, string> = {
+  KeyS: 'button[data-state="strobe"]', KeyB: 'button[data-state="blackout"]', KeyL: 'button[data-state="lights"]',
+  KeyD: 'button[data-cmd="drop"]', KeyH: 'button[data-cmd="hype"]', KeyC: 'button[data-cmd="cut"]', KeyT: '#tap',
+};
+const press = (sel: string) => { document.querySelector<HTMLButtonElement>(sel)?.click(); };
+const typing = (t: EventTarget | null) =>
+  t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) && (t as HTMLInputElement).type !== 'range');
+
+addEventListener('keydown', (e) => {
+  if (deskEl.hidden || keysDlg.open || typing(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+  const hold = HOLD_KEYS[e.code];
+  if (hold) { e.preventDefault(); if (!e.repeat) holdStart(hold); return; }
+  if (e.repeat) return;
+  if (e.key === '?') { e.preventDefault(); keysDlg.showModal(); return; }
+  const digit = /^Digit(\d)$/.exec(e.code)?.[1];
+  if (digit !== undefined) {
+    const n = Number(digit);
+    if (n === 0) { press('[data-group="look"] button[data-arg="auto"]'); press('[data-group="chase"] button[data-arg="auto"]'); }
+    else if (e.shiftKey) { if (CHASE_KEYS[n - 1]) press(`[data-group="chase"] button[data-arg="${CHASE_KEYS[n - 1]}"]`); }
+    else if (MOVE_KEYS[n - 1]) press(`[data-group="look"] button[data-arg="${MOVE_KEYS[n - 1]}"]`);
+    e.preventDefault();
+    return;
+  }
+  const sel = LETTER_KEYS[e.code];
+  if (sel && !e.shiftKey) { e.preventDefault(); press(sel); }
+});
+addEventListener('keyup', (e) => {
+  const hold = HOLD_KEYS[e.code];
+  if (!hold) return;
+  holdEnd(hold);
+  if (!typing(e.target)) e.preventDefault(); // Space mustn't also "click" whatever button has focus
+});

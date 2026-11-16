@@ -51,6 +51,11 @@ export const S = {
   msgDebt: 0,
   /** Demo mode from the desk (never saved: a reload ends it). fill = fake Bibos asked for, chat = fake chat level 0..1 (0 = off). */
   demo: { fill: 0, chat: 0 },
+  /** Hold (flash) buttons on the desk: each stays on until this time (seconds, performance clock).
+      The desk re-sends while the button is held, so a lost "let go" can't leave it stuck on. */
+  hold: { blinder: 0, strobe: 0, blackout: 0 } as Record<'blinder' | 'strobe' | 'blackout', number>,
+  /** Blinder level 0..1 (snaps on, fades off like hot bulbs). */
+  blind: 0,
   actDebt: 0,
   spam: null as null | { em: string; until: number },
   waveAt: -99,
@@ -460,3 +465,11 @@ export function activeChase(bar: number): string {
   const n = CHASE_AUTO.length;
   return S.chase === 'auto' ? CHASE_AUTO[((Math.floor((bar + 2) / 4) % n) + n) % n] : S.chase;
 }
+
+/* ---------- hold (flash) buttons ---------- */
+export const HOLD_SECONDS = 1.2;
+export const held = (k: 'blinder' | 'strobe' | 'blackout') => S.hold[k] > performance.now() / 1000;
+/** Strobe on: latched on the desk, or a strobe button being held. */
+export const isStrobe = () => S.ld.strobe || held('strobe');
+/** Blackout on: latched, or held. */
+export const isBlackout = () => S.ld.blackout || held('blackout');

@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { buildAtlas } from '@bibos/bibo-art';
 import { ACTIONS } from '@bibos/shared';
 import { params, serverBase } from './params';
-import { S, clock, crowd, crowdVersion, setCrowd, live, pyro, simTick, drop, toggleLights, spamEmote, everyone, type ShotName } from './sim';
+import { isBlackout, S, clock, crowd, crowdVersion, setCrowd, live, pyro, simTick, drop, toggleLights, spamEmote, everyone, type ShotName } from './sim';
 import { Crowd } from './crowd';
 import { World } from './world';
 import { Lights } from './lights';
@@ -175,7 +175,7 @@ function frame(): void {
 
   stats.gpuBegin();
   renderer.render(scene, camera);
-  bloom.strength = params.bloom * S.ld.glow * (S.ld.blackout ? 0.3 : 1);
+  bloom.strength = params.bloom * S.ld.glow * (isBlackout() && S.blind < 0.05 ? 0.3 : 1);
   bloom.render(scene, camera);
   stats.gpuEnd();
 

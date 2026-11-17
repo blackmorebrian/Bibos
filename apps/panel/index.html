@@ -54,6 +54,7 @@
           <dt>!dj glow 1</dt><dd>Light glow, 0 to 2</dd>
           <dt>!dj speed 2</dt><dd>Light movement speed, 0.1 to 4</dd>
           <dt>!dj lasers on</dt><dd>on, off or auto. Or a look, which also switches them on: fan, grid, liquid (liquid sky), tunnel</dd>
+          <dt>!dj blinder on / off</dt><dd>Blinders latched on (or off). "!dj blinder" alone is a quick flash</dd>
           <dt>!dj strobe on / off</dt><dd>Strobe on the beams and stage LEDs</dd>
           <dt>!dj blinder</dt><dd>Quick blinder flash (or <code>!dj blinder 2</code> for 2 seconds, up to 5)</dd>
           <dt>!dj strobe 2</dt><dd>Strobe on at a speed: 0.5 (slow), 1 (every beat), 2 (fast), 4 (faster)</dd>
@@ -102,7 +103,10 @@
         <button class="big" data-cmd="hype">🔥 Hype finale</button>
         <button class="big toggle" data-cmd="lights" data-state="lights">🌙 Lights down</button>
       </div>
-      <h3 class="sub">Hold to flash <small>· on while held, off when you let go</small></h3>
+      <div class="holdHead">
+        <h3 class="sub" id="holdTitle">Hold to flash <small>· on while held, off when you let go</small></h3>
+        <button id="latchBtn" class="latch" aria-pressed="false" title="Latch: tap a button to switch it on, tap again to switch it off">🔒 Latch</button>
+      </div>
       <div class="grid g4">
         <button class="big hold blinder" data-hold="blinder">✨ Blinder</button>
         <button class="big hold" data-hold="strobe">⚡ Strobe</button>

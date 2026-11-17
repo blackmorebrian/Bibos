@@ -16,6 +16,12 @@ import { Beams } from './beams';
 import { SpriteBatch, glowTexture } from './sprites';
 import { glows } from './bloom';
 import { hash } from './looks';
+import { ROOF, TOWER_X, FOH } from './rig';
+
+/* Every laser sits on structure (rig.ts): under the roof truss and on the side towers
+   (stage), or under the front-of-house crossbar and on its towers (DJ's view). */
+const RY = ROOF.y0 - 0.3, RZ = ROOF.z + 0.4, TX = TOWER_X, TZ = ROOF.z + 0.6;
+const FY = FOH.y0 - 0.6, FZ = FOH.z - 0.2;
 
 export const LASER_LOOKS = ['fan', 'grid', 'liquid', 'tunnel'];
 const AUTO = ['fan', 'grid', 'liquid'];
@@ -117,7 +123,7 @@ export class Lasers {
 
   private fan(a: number, f: LaserFrame): void {
     const { back, beat, kick } = f, zT = this.zT(back);
-    const em = back ? [[0, 33.4, -15], [-20, 33.4, -15], [20, 33.4, -15], [-38, 21, -15], [38, 21, -15]] : [[-24, 17, 46], [24, 17, 46], [0, 21, 46]];
+    const em = back ? [[0, RY, RZ], [-20, RY, RZ], [20, RY, RZ], [-TX, 21, TZ], [TX, 21, TZ]] : [[-24, FY, FZ], [24, FY, FZ], [0, FY, FZ]];
     const ks = beat / 2, k = Math.floor(ks), m = ease(fract(ks) / 0.12); // snap to a new position every 2 beats
     const open = 0.75 + 0.25 * kick;
     em.forEach((e, ei) => {
@@ -144,7 +150,7 @@ export class Lasers {
     const off = width(k - 1) + (width(k) - width(k - 1)) * m;
     const n = 8;
     xs.forEach((x, i) => {
-      const e = back ? [x, 33.4, -15] : [x, 21, 46], dir = i % 2 ? 1 : -1, c = i % 2 ? this.c1 : this.c0;
+      const e = back ? [x, RY, RZ] : [x, FY, FZ], dir = i % 2 ? 1 : -1, c = i % 2 ? this.c1 : this.c0;
       for (let j = 0; j < n; j++) {
         const y = back ? 0.5 + (j / (n - 1)) * 36 : 10 + (j / (n - 1)) * 90;
         this.ray(e, [e[0] + dir * off * (back ? 1 : 3.2), y, zT], c, a * 0.85);
@@ -152,7 +158,7 @@ export class Lasers {
       this.emitter(e, c, a);
     });
     // Low horizontal sheets from the sides, crossing under the vertical ones.
-    const sides = back ? [[-44, 5, -15], [44, 5, -15]] : [[-40, 6, 46], [40, 6, 46]];
+    const sides = back ? [[-TX, 5, TZ], [TX, 5, TZ]] : [[-FOH.towerX, 6, FZ], [FOH.towerX, 6, FZ]];
     sides.forEach((e, si) => {
       const c = si ? this.c0 : this.c1, h = 0.5 + 0.5 * Math.sin(f.t * 1.3 + si * 2);
       const n2 = 12;
@@ -186,7 +192,7 @@ export class Lasers {
 
   private tunnel(a: number, f: LaserFrame): void {
     const { back, t, kick } = f, zT = this.zT(back);
-    const em = back ? [[0, 33.4, -15], [-30, 26, -15], [30, 26, -15]] : [[0, 21, 46], [-30, 17, 46], [30, 17, 46]];
+    const em = back ? [[0, RY, RZ], [-TX, 26, TZ], [TX, 26, TZ]] : [[0, FY, FZ], [-30, FY, FZ], [30, FY, FZ]];
     em.forEach((e, ei) => {
       const c = ei % 2 ? this.c1 : this.c0, big = ei === 0;
       const n = big ? 26 : 14, r = (back ? (big ? 17 : 9) : big ? 70 : 35) * (0.85 + 0.25 * kick);

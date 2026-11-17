@@ -16,12 +16,12 @@ const roomIn = $<HTMLInputElement>('room'), passIn = $<HTMLInputElement>('passwo
 const loginMsg = $('loginMsg'), dot = $('dot'), statusText = $('statusText');
 
 /** The crowd version this desk expects (CROWD_VERSION in the scene's control.ts). */
-const CROWD_VERSION = 3;
+const CROWD_VERSION = 4;
 
 interface SceneState {
   v?: number; id?: string; layout?: string;
   look: string; chase?: string; colors: [string, string] | null; intensity: number; speed: number; lasers: string; laserLook?: string;
-  strobe: boolean; blackout: boolean; lights: boolean; bpm: number; shot: string; auto: boolean; viewers: number;
+  strobe: boolean; blackout: boolean; blinder?: boolean; lights: boolean; bpm: number; shot: string; auto: boolean; viewers: number;
   helpUp?: boolean; demoFill?: number; demoChat?: number; strobeRate?: number; glow?: number; helpEvery?: number; zoom?: number; pan?: number; height?: number; pace?: string; screens?: string; screenText?: string;
 }
 let state: SceneState | null = null;
@@ -250,6 +250,7 @@ function render(): void {
   mark('strobeRate', String(s.strobeRate ?? 1));
   mark('helpEvery', String(s.helpEvery ?? 10));
   $('helpShow').classList.toggle('on', !!s.helpUp);
+  paintHolds();
   mark('screens', s.screens ?? 'auto');
   mark('demoFill', String(s.demoFill ?? 0));
   mark('demoChat', `chat ${s.demoChat ?? 0}`);
@@ -296,13 +297,55 @@ function holdEnd(what: string): void {
   send('hold', `${what} off`);
   document.querySelectorAll(`[data-hold="${what}"]`).forEach((b) => b.classList.remove('held'));
 }
+
+/* Latch: with it on, a tap switches a flash button on and the next tap switches it off.
+   Either way, a button that's latched on shows it, and pressing it switches it off. */
+type Flash = 'blinder' | 'strobe' | 'blackout' | 'lasers';
+const LATCH_STORE = 'bibos-desk-latch';
+let latchMode = false;
+try { latchMode = localStorage.getItem(LATCH_STORE) === '1'; } catch { /* private window */ }
+const latchPending = new Map<string, { on: boolean; until: number }>();
+function isLatched(what: string): boolean {
+  const p = latchPending.get(what);
+  if (p && p.until > Date.now()) return p.on;
+  if (!state) return false;
+  return what === 'lasers' ? state.lasers === 'on' : !!state[what as 'blinder' | 'strobe' | 'blackout'];
+}
+function latchToggle(what: string): void {
+  const on = !isLatched(what);
+  send(what, what === 'lasers' ? (on ? 'on' : 'auto') : on ? 'on' : 'off');
+  latchPending.set(what, { on, until: Date.now() + 1500 });
+  paintHolds();
+}
+function paintHolds(): void {
+  document.querySelectorAll<HTMLButtonElement>('button[data-hold]').forEach((b) => {
+    const on = isLatched(b.dataset.hold as Flash);
+    b.classList.toggle('latched', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  const lb = $('latchBtn');
+  lb.setAttribute('aria-pressed', String(latchMode));
+  lb.classList.toggle('on', latchMode);
+  $('holdTitle').innerHTML = latchMode ? 'Latch <small>· tap to switch on, tap again to switch off</small>' : 'Hold to flash <small>· on while held, off when you let go</small>';
+}
+$('latchBtn').addEventListener('click', () => {
+  latchMode = !latchMode;
+  try { localStorage.setItem(LATCH_STORE, latchMode ? '1' : '0'); } catch { /* ignore */ }
+  paintHolds();
+});
+/** A flash button or key went down: latch it, unlatch it, or hold it. */
+function flashDown(what: string): void {
+  if (latchMode || isLatched(what)) latchToggle(what);
+  else holdStart(what);
+}
+paintHolds();
 const releaseAll = () => { for (const w of [...holding.keys()]) holdEnd(w); };
 addEventListener('blur', releaseAll);
 document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); });
 
 document.querySelectorAll<HTMLButtonElement>('button[data-hold]').forEach((b) => {
   const what = b.dataset.hold!;
-  b.addEventListener('pointerdown', (e) => { e.preventDefault(); b.setPointerCapture(e.pointerId); holdStart(what); });
+  b.addEventListener('pointerdown', (e) => { e.preventDefault(); b.setPointerCapture(e.pointerId); flashDown(what); });
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, () => holdEnd(what));
   b.addEventListener('contextmenu', (e) => e.preventDefault()); // long-press on phones
 });
@@ -325,6 +368,7 @@ SECTIONS.push(['Hold to flash', [
   k(K('Z'), '', '[data-hold="strobe"]', 'Strobe while held', 'strobe'),
   k(K('X'), '', '[data-hold="blackout"]', 'Blackout while held', 'blackout'),
   k(K('V'), '', '[data-hold="lasers"]', 'Lasers while held', 'lasers'),
+  k('Backquote', '', '#latchBtn', 'Latch on / off (tap to switch on, tap again to switch off)'),
 ]]);
 SECTIONS.push(['Show', [
   k(K('D'), '', cmd('drop'), 'Drop'), k(K('H'), '', cmd('hype'), 'Hype finale'), k(K('L'), '', 'button[data-state="lights"]', 'Lights down / up'),
@@ -385,7 +429,7 @@ const KEYS = SECTIONS.flatMap(([, ks]) => ks);
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 const KEY_NAMES: Record<string, string> = {
-  Space: 'Space', Period: '.', Slash: '/', Comma: ',', Semicolon: ';', Quote: "'", BracketLeft: '[', ArrowLeft: '←', ArrowRight: '→',
+  Space: 'Space', Backquote: '`', Period: '.', Slash: '/', Comma: ',', Semicolon: ';', Quote: "'", BracketLeft: '[', ArrowLeft: '←', ArrowRight: '→',
 };
 const keyName = (code: string) => KEY_NAMES[code] ?? code.replace(/^Key|^Digit/, '');
 const label = (x: Key) => (x.mod === 'shift' ? '⇧' : x.mod === 'alt' ? (isMac ? '⌥' : 'Alt+') : '') + keyName(x.code);
@@ -434,7 +478,7 @@ const HOLD_CODES = new Map(KEYS.filter((x) => x.hold).map((x) => [x.code, x.hold
 addEventListener('keydown', (e) => {
   if (deskEl.hidden || keysDlg.open || typing(e.target) || e.metaKey || e.ctrlKey) return;
   const mod: Mod = e.altKey ? 'alt' : e.shiftKey ? 'shift' : '';
-  if (mod === '' && HOLD_CODES.has(e.code)) { e.preventDefault(); if (!e.repeat) holdStart(HOLD_CODES.get(e.code)!); return; }
+  if (mod === '' && HOLD_CODES.has(e.code)) { e.preventDefault(); if (!e.repeat) flashDown(HOLD_CODES.get(e.code)!); return; }
   if (e.code === 'Slash' && e.shiftKey && !e.altKey) { e.preventDefault(); showKeys(); return; } // "?"
   const x = KEYS.find((q) => q.code === e.code && q.mod === mod && !q.hold);
   if (!x) return;

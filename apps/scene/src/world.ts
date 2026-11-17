@@ -4,6 +4,7 @@
  * values used as-is (color management is off in main.ts).
  */
 import * as THREE from 'three';
+import { ROOF, TOWER_X, FOH, DELAY, BLINDERS_BACK, BLINDERS_FRONT, podLamps, type Pod } from './rig';
 import { mulberry } from '@bibos/shared';
 import { S, activeLook, activeChase, reduceMotion, isStrobe, isBlackout } from './sim';
 import { canvasTexture } from './sprites';
@@ -42,6 +43,50 @@ function rect(x0: number, y0: number, x1: number, y1: number, z: number, mat: TH
   const m = new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(x1 - x0), Math.abs(y1 - y0)), mat);
   m.position.set((x0 + x1) / 2, (y0 + y1) / 2, z);
   return m;
+}
+/* Truss: a lattice (two chords and zig-zag bracing) you can see through, so every light hangs on something. */
+let trussTex: THREE.CanvasTexture | null = null;
+const trussMat = () => {
+  if (!trussTex) {
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 32;
+    const g = c.getContext('2d')!;
+    g.strokeStyle = '#ffffff'; g.lineWidth = 5; g.lineCap = 'square';
+    g.beginPath();
+    g.moveTo(0, 3); g.lineTo(64, 3); g.moveTo(0, 29); g.lineTo(64, 29); // chords
+    g.moveTo(0, 29); g.lineTo(32, 3); g.lineTo(64, 29); // bracing
+    g.moveTo(0, 3); g.lineTo(0, 29); g.moveTo(32, 3); g.lineTo(32, 29);
+    g.stroke();
+    trussTex = new THREE.CanvasTexture(c);
+    trussTex.wrapS = THREE.RepeatWrapping;
+    trussTex.anisotropy = 4;
+  }
+  return trussTex;
+};
+/** A truss section from (x0,y0) to (x1,y1): runs along whichever side is longer. */
+function truss(x0: number, y0: number, x1: number, y1: number, z: number): THREE.Mesh {
+  const w = Math.abs(x1 - x0), h = Math.abs(y1 - y0), vertical = h > w;
+  const len = vertical ? h : w, th = vertical ? w : h;
+  const tex = trussMat().clone();
+  tex.repeat.set(len / (th * 2), 1);
+  tex.needsUpdate = true;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(len, th), new THREE.MeshBasicMaterial({ color: '#4a3aa8', map: tex, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide }));
+  m.position.set((x0 + x1) / 2, (y0 + y1) / 2, z);
+  if (vertical) m.rotation.z = Math.PI / 2;
+  return m;
+}
+/** A blinder pod's housing: a dark box with two lamp bezels. */
+function podHousing(p: Pod, back: boolean): THREE.Group {
+  const grp = new THREE.Group();
+  const z = p.z + (back ? -0.15 : 0.15); // just behind the lamps, as seen from that view's camera
+  const box = p.vertical ? rect(p.x - 0.65, p.y - 1.3, p.x + 0.65, p.y + 1.3, z, basic('#120a3a')) : rect(p.x - 1.3, p.y - 0.65, p.x + 1.3, p.y + 0.65, z, basic('#120a3a'));
+  grp.add(box);
+  for (const l of podLamps(p)) {
+    const b = new THREE.Mesh(new THREE.CircleGeometry(0.48, 18), basic('#3b2f7e'));
+    b.position.set(l[0], l[1], z + (back ? 0.03 : -0.03));
+    grp.add(b);
+  }
+  return grp;
 }
 function shape(points: number[][], z: number, mat: THREE.Material): THREE.Mesh {
   const s = new THREE.Shape(points.map(([x, y]) => new THREE.Vector2(x, y)));
@@ -203,8 +248,15 @@ export class World {
     g.add(shape([[-400, 0], [-300, 34], [-210, 16], [-130, 44], [-60, 20], [20, 38], [110, 18], [210, 46], [310, 20], [400, 0]], 320, basic('#2b1387')));
     this.buildFerris();
     this.buildFlags();
+    // Front of house: the side-screen poles carry a truss crossbar, with towers at each end.
+    g.add(truss(-FOH.x, FOH.y0, FOH.x, FOH.y1, FOH.z + 0.1));
+    for (const s of [-1, 1]) g.add(truss(s * FOH.towerX - 0.5, 0, s * FOH.towerX + 0.5, FOH.y0, FOH.z + 0.1));
+    for (const p of BLINDERS_FRONT) g.add(podHousing(p, false));
+    // Delay truss far out in the crowd: the DJ's-view moving heads hang under it.
+    g.add(truss(-DELAY.x, DELAY.y0, DELAY.x, DELAY.y1, DELAY.z + 0.3));
+    for (const x of [-DELAY.x, -36, 0, 36, DELAY.x]) g.add(truss(x - 0.4, 0, x + 0.4, DELAY.y0, DELAY.z + 0.3));
     for (const x of [-24, 24]) {
-      g.add(rect(x - 0.7, 0, x + 0.7, 20, 46, basic('#1c1266')));
+      g.add(rect(x - 0.7, 0, x + 0.7, FOH.y0, 46, basic('#1c1266')));
       g.add(rect(x - 8.35, 7.65, x + 8.35, 17.35, 45.85, basic(PAPER)));
       const scr = rect(x - 8, 8, x + 8, 17, 45.8, basic('#ffffff', screenTex));
       scr.rotation.y = Math.PI; // face the DJ's-view camera
@@ -313,7 +365,12 @@ export class World {
       }
     }
     g.add(this.rings);
-    g.add(rect(-36, 33.2, 36, 34, -15, basic('#1c1266')));
+    // Roof truss from tower to tower; the moving heads, lasers and top blinders hang on it.
+    g.add(truss(-ROOF.x, ROOF.y0, ROOF.x, ROOF.y1, ROOF.z));
+    for (const s of [-1, 1]) g.add(truss(s * TOWER_X - 0.6, 0, s * TOWER_X + 0.6, ROOF.y0, ROOF.z));
+    for (const p of BLINDERS_BACK) g.add(podHousing(p, true));
+    // The liquid-sky laser's box on the stage floor.
+    g.add(rect(-1.3, 1.7, 1.3, 3.0, -13.15, basic('#120a3a')));
 
     g.add(rect(-20.35, 3.65, 20.35, 26.85, -17.05, basic(PAPER)));
     const main = rect(-20, 4, 20, 26.5, -17, basic('#ffffff', screenTex));

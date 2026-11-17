@@ -9,7 +9,7 @@ import { applyCommand, joinedCount, HELP_SECONDS } from './viewers';
 export interface HubStatus { state: string }
 
 /** Bump when the desk needs something new from the crowd; the desk asks for a refresh of older ones. */
-export const CROWD_VERSION = 3;
+export const CROWD_VERSION = 4;
 
 export function connectHub(): HubStatus {
   const status: HubStatus = { state: 'off' };
@@ -24,7 +24,7 @@ export function connectHub(): HubStatus {
     const L = S.ld;
     ws.send(JSON.stringify({
       type: 'state', v: CROWD_VERSION, id, layout: innerHeight > innerWidth ? 'vertical' : 'wide', look: S.look, chase: S.chase, colors: L.colors, intensity: L.intensity, glow: L.glow, speed: L.speed, lasers: L.lasers, laserLook: L.laserLook,
-      strobe: L.strobe, strobeRate: L.strobeRate, blackout: L.blackout, lights: S.lights, bpm: clock.bpm, shot: S.shot, auto: S.auto,
+      strobe: L.strobe, strobeRate: L.strobeRate, blackout: L.blackout, blinder: L.blinder, lights: S.lights, bpm: clock.bpm, shot: S.shot, auto: S.auto,
       zoom: S.zoom, pan: S.cam.panX, height: S.cam.panY, pace: S.cam.pace, screens: S.screens.mode, helpUp: S.t - S.helpAt < HELP_SECONDS, helpEvery: S.helpEvery, screenText: S.screens.text,
       viewers: live ? joinedCount() : crowd.length, demoFill: S.demo.fill, demoChat: S.demo.chat,
     }));

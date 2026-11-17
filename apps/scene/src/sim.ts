@@ -79,6 +79,8 @@ export const S = {
     /** Strobe flashes per beat: 0.5, 1, 2 or 4. */
     strobeRate: 1,
     blackout: false,
+    /** Blinder latched on from the desk (the hold buttons flash it instead). */
+    blinder: false,
     glow: 1,
   },
   /** Camera operator: framing on top of every shot, and how often the auto-director cuts. */

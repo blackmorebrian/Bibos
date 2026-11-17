@@ -13,6 +13,7 @@ import { glows } from './bloom';
 import { aim, chaseLevel, strobeLevel } from './looks';
 import { Beams } from './beams';
 import { Lasers } from './lasers';
+import { ROOF, DELAY, HEAD_Y, BLINDERS_BACK, BLINDERS_FRONT, podLamps } from './rig';
 
 export class Lights {
   readonly group = new THREE.Group();
@@ -23,7 +24,7 @@ export class Lights {
   private lastT = 0;
   private lasers = new Lasers();
   constructor() {
-    this.glows = new SpriteBatch(glowTexture(), 320, 'add', 21);
+    this.glows = new SpriteBatch(glowTexture(), 420, 'add', 21);
     this.group.add(this.beams.mesh, this.glows.mesh, this.lasers.group);
     glows(this.beams.mesh, this.glows.mesh);
   }
@@ -78,7 +79,10 @@ export class Lights {
       // The chase switches heads on and off while they keep moving.
       const amp = chase === 'none' ? m.amp : m.amp * chaseLevel(chase, u, beat, kick, t);
       const up = i % 2 === 0;
-      const o = back ? (up ? [s * 36, 34, -15] : [s * 34, 32.8, -15]) : (up ? [s * 70, 7, 100] : [s * 34, 17, 0]);
+      // On the roof truss (stage), or under the delay truss out in the crowd (DJ's view; its
+      // lower heads are the roof rig behind the DJ, so their beams come from over the camera).
+      const o = back ? (up ? [s * 36, HEAD_Y.roofUp, ROOF.z] : [s * 34, HEAD_Y.roofDown, ROOF.z])
+        : up ? [s * 70, HEAD_Y.delay, DELAY.z - 0.2] : [s * 34, HEAD_Y.roofDown, ROOF.z];
       let g: number[], pool = false;
       if (back) {
         // Seen from the crowd: the upper heads fan out over the audience toward the camera (low tilt)
@@ -97,18 +101,30 @@ export class Lights {
       lens(o, c, amp * power * (0.7 + 0.5 * kick));
     }
 
-    /* Blinders: warm-white bank across the roof that punches on the kick when it's hot.
-       Small light sources only (no full-screen flash). */
+    /* Blinders: warm tungsten pods all around the main screen (roof truss, both sides of the
+       frame and the stage floor), or on the front-of-house truss in the DJ's view. They punch
+       on the kick when it's hot. Small light sources only (no full-screen flash). */
     const hot = clamp((S.E - 0.62) * 3, 0, 1) + S.flash;
     // Held blinder: the whole bank full on (even through a blackout, like a real desk's flash).
     // Snaps on, fades off over a moment like hot bulbs. Steady light, so it's not a strobe.
-    S.blind = held('blinder') ? Math.min(1, S.blind + dtReal * 25) : Math.max(0, S.blind - dtReal * 2.6);
+    S.blind = held('blinder') || L.blinder ? Math.min(1, S.blind + dtReal * 25) : Math.max(0, S.blind - dtReal * 2.6);
     const kickBlind = !dark && hot > 0.02 && !reduceMotion ? Math.min(1.2, hot * Math.pow(kick, 3) * L.intensity) : 0;
     const blind = S.blind * Math.max(0.7, Math.min(1.3, L.intensity)) * 1.5;
     if (kickBlind > 0.01 || blind > 0.01) {
       const ba = Math.max(kickBlind, blind);
-      const row = back ? [-30, -18, -6, 6, 18, 30].map((x) => [x, 34.6, -14.8]) : [[-24, 21.4, 46], [24, 21.4, 46], [-12, 21.4, 46], [12, 21.4, 46]];
-      for (const p of row) lens(p, [1, 0.85, 0.6], ba, 1.5 + S.blind * 0.9);
+      const size = 1 + S.blind * 0.35;
+      // On the kick only the roof row punches; held or latched, the whole bank goes.
+      const pods = back ? BLINDERS_BACK : BLINDERS_FRONT;
+      pods.forEach((pod, i) => {
+        const a = blind > kickBlind ? ba : i < 7 ? kickBlind : 0;
+        if (a <= 0.01) return;
+        for (const p of podLamps(pod)) {
+          // Deep amber halo, warm flare and an orange-gold filament core, like tungsten molefays.
+          G.add(p[0], p[1], p[2], 4.6 * size, 4.6 * size, 1, 0.32, 0.03, Math.min(0.85, a * 0.6));
+          G.add(p[0], p[1], p[2], 11 * size, 0.45 * size, 1, 0.48, 0.12, Math.min(0.6, a * 0.4));
+          G.add(p[0], p[1], p[2], 1.25 * size, 1.25 * size, 1, 0.62, 0.24, Math.min(1, a * 0.9));
+        }
+      });
     }
     /* Lasers. Auto: on big moments (not in lights-down or blackout, skipped on every 4th bar unless very hype).
        Switched on (or held) on the desk: always, cutting through lights-down and blackout. */
